@@ -1,12 +1,12 @@
-# 📘 Reading List Manager
+# Reading List Manager
 
 A full-stack web application for managing personal reading lists, built with Svelte, Node.js, Express, and SQLite.
 
-## 📌 Project Overview
+## Project Overview
 
 The Reading List Manager allows users to create, manage, and browse personal reading lists. Users can register accounts, add books with metadata (title, author, genre, reading status, and notes), and view their collections in a responsive interface. The application also includes a public API endpoint that provides anonymised statistics about popular books across all users.
 
-### ✨ Key Features
+### Key Features
 
 - **User Authentication**: Secure registration and login system
 - **CRUD Operations**: Create, read, update, and delete books in your reading list
@@ -15,7 +15,7 @@ The Reading List Manager allows users to create, manage, and browse personal rea
 - **Public Statistics**: View popular books and genres across all users (anonymised)
 - **Data Privacy**: Users can only see and modify their own books
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 - **Frontend**: Svelte with Vite for development and building
 - **Backend**: Node.js with Express.js framework
@@ -23,7 +23,7 @@ The Reading List Manager allows users to create, manage, and browse personal rea
 - **Authentication**: Express sessions with secure password hashing
 - **Styling**: Vanilla CSS with responsive design principles
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 reading-list-manager/
@@ -74,7 +74,7 @@ reading-list-manager/
 └── package.json        # Root package.json for scripts
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -241,7 +241,7 @@ CREATE TABLE books (
 ### Public Endpoints
 - `GET /api/books/public` - Get anonymised book statistics
 
-## 🧪 Testing
+## Testing
 
 ### Backend Testing
 ```bash
@@ -258,7 +258,7 @@ npm run test:frontend
 npm test
 ```
 
-## 🔒 Security Considerations
+## Security Considerations
 
 - **Password Security**: Passwords are hashed using bcrypt with salt
 - **Session Management**: Secure session cookies with appropriate flags
@@ -266,9 +266,9 @@ npm test
 - **SQL Injection Prevention**: Parameterised queries are used throughout
 - **Authentication Middleware**: Protected routes require valid authentication
 
-## 📝 Implementation Tasks
+## Implementation Tasks
 
-Your colleague should focus on implementing the following areas (marked with `TODO` comments in the code):
+Focus focus on implementing the following areas (marked with `TODO` comments in the code, though go nuts with it and rework or add whatever):
 
 ### Backend Tasks
 1. **User Registration** - Implement password hashing and user creation
@@ -291,15 +291,16 @@ Your colleague should focus on implementing the following areas (marked with `TO
 1. Create a feature branch: `git checkout -b feature/your-feature-name`
 2. Make your changes and commit them: `git commit -m 'Add some feature'`
 3. Push to the branch: `git push origin feature/your-feature-name`
-4. Create a pull request
+4. Create a pull request, then either ask me to merge it in or squash and commit yourself
 
-## 📞 Support
+## Support
 
 If you encounter any issues or have questions:
 1. Check the documentation in the `docs/` folder
 2. Review the code comments and TODO items
 3. Check the console for error messages
-4. Ask for help from your project partner
+4. Hit marce up, not necessarily in this order
+
 
 ## 🎯 Learning Objectives
 
