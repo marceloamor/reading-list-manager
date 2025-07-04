@@ -1,8 +1,8 @@
 -- Reading List Manager Database Schema
--- 
+--
 -- This file defines the database structure for the Reading List Manager application.
 -- It includes tables for users and books with appropriate constraints and relationships.
--- 
+--
 -- Learning Notes:
 -- - PRIMARY KEY automatically creates an index and ensures uniqueness
 -- - FOREIGN KEY constraints maintain referential integrity
@@ -17,16 +17,16 @@
 CREATE TABLE IF NOT EXISTS users (
     -- Primary key with auto-incrementing ID
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    
+
     -- Username must be unique and not null
     username TEXT UNIQUE NOT NULL,
-    
+
     -- Hashed password (never store plain text passwords!)
     password_hash TEXT NOT NULL,
-    
+
     -- Timestamp when the user account was created
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    
+
     -- Constraints to ensure data integrity
     CONSTRAINT users_username_length CHECK (LENGTH(username) >= 3 AND LENGTH(username) <= 30),
     CONSTRAINT users_username_format CHECK (username GLOB '[A-Za-z0-9_-]*')
@@ -40,34 +40,34 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS books (
     -- Primary key with auto-incrementing ID
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    
+
     -- Book title (required)
     title TEXT NOT NULL,
-    
+
     -- Book author (optional)
     author TEXT,
-    
+
     -- Book genre (optional)
     genre TEXT,
-    
+
     -- Reading status with predefined values
     status TEXT CHECK(status IN ('read', 'reading', 'to-read')) DEFAULT 'to-read',
-    
+
     -- Personal notes about the book (optional)
     notes TEXT,
-    
+
     -- Foreign key linking to the users table
     user_id INTEGER NOT NULL,
-    
+
     -- Timestamp when the book was added
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    
+
     -- Timestamp when the book was last updated
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    
+
     -- Foreign key constraint ensuring referential integrity
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    
+
     -- Additional constraints for data validation
     CONSTRAINT books_title_length CHECK (LENGTH(title) >= 1 AND LENGTH(title) <= 255),
     CONSTRAINT books_author_length CHECK (author IS NULL OR LENGTH(author) <= 255),
@@ -103,12 +103,14 @@ CREATE INDEX IF NOT EXISTS idx_books_created_at ON books(created_at);
 -- =============================================================================
 
 -- Trigger to automatically update the updated_at column when a book is modified
-CREATE TRIGGER IF NOT EXISTS update_books_updated_at
-    AFTER UPDATE ON books
-    FOR EACH ROW
-BEGIN
-    UPDATE books SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
-END;
+-- TODO: This trigger failed to run on Node v22 + sqlite3.
+--       Revisit after finishing main dev work.
+-- CREATE TRIGGER IF NOT EXISTS update_books_updated_at
+--     AFTER UPDATE ON books
+--     FOR EACH ROW
+-- BEGIN
+--     UPDATE books SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+-- END;
 
 -- =============================================================================
 -- Views for Common Queries (Optional)
@@ -116,7 +118,7 @@ END;
 
 -- View to get book statistics by user (useful for dashboards)
 CREATE VIEW IF NOT EXISTS user_book_stats AS
-SELECT 
+SELECT
     u.id as user_id,
     u.username,
     COUNT(b.id) as total_books,
@@ -129,7 +131,7 @@ GROUP BY u.id, u.username;
 
 -- View for public book statistics (anonymised)
 CREATE VIEW IF NOT EXISTS public_book_stats AS
-SELECT 
+SELECT
     title,
     author,
     genre,
@@ -146,7 +148,7 @@ ORDER BY times_added DESC;
 -- =============================================================================
 
 -- The schema is designed with the following considerations:
--- 
+--
 -- 1. Data Integrity:
 --    - Foreign key constraints ensure books belong to valid users
 --    - Check constraints validate data at the database level
@@ -177,4 +179,4 @@ ORDER BY times_added DESC;
 -- - Reading sessions table for tracking reading progress
 -- - Book ratings and reviews
 -- - Social features (following users, shared lists)
--- - External book data integration (ISBN, cover images, etc.) 
+-- - External book data integration (ISBN, cover images, etc.)
