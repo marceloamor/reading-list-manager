@@ -45,5 +45,8 @@
   "bugs": {
     "url": "https://github.com/marceloamor/reading-list-manager/issues"
   },
-  "homepage": "https://github.com/marceloamor/reading-list-manager#readme"
-} 
+  "homepage": "https://github.com/marceloamor/reading-list-manager#readme",
+  "dependencies": {
+    "sqlite3": "^5.1.7"
+  }
+}
