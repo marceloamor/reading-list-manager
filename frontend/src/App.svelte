@@ -20,7 +20,7 @@
 
     // TODO: Import page components
     import Login from './routes/Login.svelte';
-    // import Register from './routes/Register.svelte';
+    import Register from './routes/Register.svelte';
     // import MyBooks from './routes/MyBooks.svelte';
     // import PublicBooks from './routes/PublicBooks.svelte';
 
@@ -270,8 +270,6 @@
                     <p>Please log in to access your reading list.</p>
 
                     <!-- TODO: Replace with Login component -->
-                    <!-- <Login onSuccess={handleLoginSuccess} /> -->
-
                     <!-- Placeholder login form -->
                     <Login onSuccess={handleLoginSuccess} />
                     <p>
@@ -290,30 +288,17 @@
                 <div class="page-container">
                     <h2>Create Account</h2>
                     <p>Join Reading List Manager to track your books.</p>
-
                     <!-- TODO: Replace with Register component -->
-                    <!-- <Register onSuccess={handleRegisterSuccess} /> -->
-
-                    <!-- Placeholder registration form -->
-                    <div class="placeholder-form">
-                        <h3>Registration Form Placeholder</h3>
-                        <p>TODO: Implement Register component</p>
+                    <Register onSuccess={handleRegisterSuccess} />
+                    <p>
+                        Already have an account?
                         <button
-                            on:click={() =>
-                                handleRegisterSuccess({ username: 'demo' })}
+                            class="link-button"
+                            on:click={() => handleNavigation('login')}
                         >
-                            Demo Register
+                            Login here
                         </button>
-                        <p>
-                            Already have an account?
-                            <button
-                                class="link-button"
-                                on:click={() => handleNavigation('login')}
-                            >
-                                Login here
-                            </button>
-                        </p>
-                    </div>
+                    </p>
                 </div>
 
                 <!-- Route: My Books Page -->
