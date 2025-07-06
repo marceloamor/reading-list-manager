@@ -1,10 +1,10 @@
 /**
  * Database Utility Functions
- * 
+ *
  * This file handles all database operations for the Reading List Manager.
  * It includes connection management, CRUD operations for users and books,
  * and database initialisation.
- * 
+ *
  * Learning Notes:
  * - SQLite is a lightweight, file-based database
  * - Always use parameterised queries to prevent SQL injection
@@ -42,7 +42,7 @@ function getConnection() {
 function executeQuery(sql, params = []) {
     return new Promise((resolve, reject) => {
         const db = getConnection();
-        
+
         db.all(sql, params, (err, rows) => {
             if (err) {
                 console.error('Database query error:', err.message);
@@ -53,7 +53,7 @@ function executeQuery(sql, params = []) {
                 resolve(rows);
             }
         });
-        
+
         db.close();
     });
 }
@@ -64,7 +64,7 @@ function executeQuery(sql, params = []) {
 function executeQuerySingle(sql, params = []) {
     return new Promise((resolve, reject) => {
         const db = getConnection();
-        
+
         db.get(sql, params, (err, row) => {
             if (err) {
                 console.error('Database query error:', err.message);
@@ -73,7 +73,7 @@ function executeQuerySingle(sql, params = []) {
                 resolve(row);
             }
         });
-        
+
         db.close();
     });
 }
@@ -84,7 +84,7 @@ function executeQuerySingle(sql, params = []) {
 function executeModifyQuery(sql, params = []) {
     return new Promise((resolve, reject) => {
         const db = getConnection();
-        
+
         db.run(sql, params, function(err) {
             if (err) {
                 console.error('Database modify error:', err.message);
@@ -96,7 +96,7 @@ function executeModifyQuery(sql, params = []) {
                 });
             }
         });
-        
+
         db.close();
     });
 }
@@ -112,16 +112,25 @@ function executeModifyQuery(sql, params = []) {
 async function initializeDatabase() {
     try {
         console.log('Initialising database...');
-        
+
         // TODO: Implement database initialisation
         // 1. Create users table
+        await executeModifyQuery(`
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        console.log('User Table ensured')
         // 2. Create books table with foreign key to users
         // 3. Create any indexes for performance
         // 4. Insert seed data if needed
 
         // PLACEHOLDER: Remove this and implement actual logic
-        console.log('Database initialisation not implemented yet');
-        console.log('TODO: Create users and books tables');
+        // console.log('Database initialisation not implemented yet');
+        // console.log('TODO: Create users and books tables');
 
         // EXAMPLE IMPLEMENTATION STRUCTURE:
         /*
@@ -155,7 +164,7 @@ async function initializeDatabase() {
         await executeModifyQuery(`
             CREATE INDEX IF NOT EXISTS idx_books_user_id ON books(user_id)
         `);
-        
+
         await executeModifyQuery(`
             CREATE INDEX IF NOT EXISTS idx_books_status ON books(status)
         `);
@@ -183,23 +192,14 @@ async function createUser(username, passwordHash) {
     try {
         // TODO: Implement user creation
         // 1. Insert user into database
-        // 2. Return the new user ID
-        // 3. Handle unique constraint violations
-
-        // PLACEHOLDER: Remove this and implement actual logic
-        throw new Error('User creation not implemented yet');
-
-        // EXAMPLE IMPLEMENTATION STRUCTURE:
-        /*
         const sql = `
             INSERT INTO users (username, password_hash)
-            VALUES (?, ?)
+            VALUES (?,?)
         `;
-        
-        const result = await executeModifyQuery(sql, [username, passwordHash]);
-        return result.id;
-        */
-
+        // 2. Return the new user ID
+        const results = await executeModifyQuery(sql, [username, passwordHash]);
+        return results.id
+        // 3. Handle unique constraint violation
     } catch (error) {
         console.error('Error creating user:', error);
         throw error;
@@ -215,22 +215,13 @@ async function findUserByUsername(username) {
     try {
         // TODO: Implement user lookup by username
         // 1. Query database for user with given username
-        // 2. Return user object or null if not found
-
-        // PLACEHOLDER: Remove this and implement actual logic
-        throw new Error('Find user by username not implemented yet');
-
-        // EXAMPLE IMPLEMENTATION STRUCTURE:
-        /*
         const sql = `
             SELECT id, username, password_hash, created_at
             FROM users
             WHERE username = ?
         `;
-        
+        // 2. Return user object or null if not found
         return await executeQuerySingle(sql, [username]);
-        */
-
     } catch (error) {
         console.error('Error finding user by username:', error);
         throw error;
@@ -246,22 +237,13 @@ async function findUserById(userId) {
     try {
         // TODO: Implement user lookup by ID
         // 1. Query database for user with given ID
-        // 2. Return user object or null if not found
-
-        // PLACEHOLDER: Remove this and implement actual logic
-        throw new Error('Find user by ID not implemented yet');
-
-        // EXAMPLE IMPLEMENTATION STRUCTURE:
-        /*
         const sql = `
             SELECT id, username, created_at
             FROM users
             WHERE id = ?
         `;
-        
+        // 2. Return user object or null if not found
         return await executeQuerySingle(sql, [userId]);
-        */
-
     } catch (error) {
         console.error('Error finding user by ID:', error);
         throw error;
@@ -293,7 +275,7 @@ async function createBook(bookData) {
             INSERT INTO books (title, author, genre, status, notes, user_id)
             VALUES (?, ?, ?, ?, ?, ?)
         `;
-        
+
         const params = [
             bookData.title,
             bookData.author,
@@ -302,7 +284,7 @@ async function createBook(bookData) {
             bookData.notes,
             bookData.user_id
         ];
-        
+
         const result = await executeModifyQuery(sql, params);
         return result.id;
         */
@@ -336,28 +318,28 @@ async function getBooksByUserId(userId, filters = {}) {
             FROM books
             WHERE user_id = ?
         `;
-        
+
         const params = [userId];
-        
+
         // Add filters
         if (filters.status) {
             sql += ' AND status = ?';
             params.push(filters.status);
         }
-        
+
         if (filters.genre) {
             sql += ' AND genre = ?';
             params.push(filters.genre);
         }
-        
+
         if (filters.search) {
             sql += ' AND (title LIKE ? OR author LIKE ?)';
             const searchPattern = `%${filters.search}%`;
             params.push(searchPattern, searchPattern);
         }
-        
+
         sql += ' ORDER BY created_at DESC';
-        
+
         return await executeQuery(sql, params);
         */
 
@@ -388,7 +370,7 @@ async function getBookById(bookId) {
             FROM books
             WHERE id = ?
         `;
-        
+
         return await executeQuerySingle(sql, [bookId]);
         */
 
@@ -421,7 +403,7 @@ async function updateBook(bookId, updateData) {
             SET title = ?, author = ?, genre = ?, status = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         `;
-        
+
         const params = [
             updateData.title,
             updateData.author,
@@ -430,7 +412,7 @@ async function updateBook(bookId, updateData) {
             updateData.notes,
             bookId
         ];
-        
+
         const result = await executeModifyQuery(sql, params);
         return result.changes > 0;
         */
@@ -571,20 +553,20 @@ async function searchPublicBooks(query, filters = {}) {
             FROM books
             WHERE (title LIKE ? OR author LIKE ?)
         `;
-        
+
         const params = [`%${query}%`, `%${query}%`];
-        
+
         if (filters.genre) {
             sql += ' AND genre = ?';
             params.push(filters.genre);
         }
-        
+
         sql += `
             GROUP BY title, author, genre
             ORDER BY popularity DESC, title ASC
             LIMIT 20
         `;
-        
+
         return await executeQuery(sql, params);
         */
 
@@ -626,25 +608,25 @@ module.exports = {
     initializeDatabase,
     testConnection,
     closeDatabase,
-    
+
     // User operations
     createUser,
     findUserByUsername,
     findUserById,
-    
+
     // Book operations
     createBook,
     getBooksByUserId,
     getBookById,
     updateBook,
     deleteBook,
-    
+
     // Public operations
     getPublicBookStats,
     searchPublicBooks,
-    
+
     // Utility functions
     executeQuery,
     executeQuerySingle,
     executeModifyQuery
-}; 
+};
