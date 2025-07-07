@@ -125,26 +125,6 @@ async function initializeDatabase() {
         `);
         console.log('User Table ensured')
         // 2. Create books table with foreign key to users
-        // 3. Create any indexes for performance
-        // 4. Insert seed data if needed
-
-        // PLACEHOLDER: Remove this and implement actual logic
-        // console.log('Database initialisation not implemented yet');
-        // console.log('TODO: Create users and books tables');
-
-        // EXAMPLE IMPLEMENTATION STRUCTURE:
-        /*
-        // Create users table
-        await executeModifyQuery(`
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT UNIQUE NOT NULL,
-                password_hash TEXT NOT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
-        // Create books table
         await executeModifyQuery(`
             CREATE TABLE IF NOT EXISTS books (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -159,8 +139,8 @@ async function initializeDatabase() {
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
         `);
-
-        // Create indexes for better performance
+        console.log('Books table ensured');
+        // 3. Create any indexes for performance
         await executeModifyQuery(`
             CREATE INDEX IF NOT EXISTS idx_books_user_id ON books(user_id)
         `);
@@ -168,10 +148,9 @@ async function initializeDatabase() {
         await executeModifyQuery(`
             CREATE INDEX IF NOT EXISTS idx_books_status ON books(status)
         `);
+        console.log('Indexes created');
 
-        console.log('Database tables created successfully');
-        */
-
+        console.log('✅ Database initialisation complete');
     } catch (error) {
         console.error('Error initialising database:', error);
         throw error;
@@ -263,14 +242,11 @@ async function createBook(bookData) {
     try {
         // TODO: Implement book creation
         // 1. Validate book data
+        if (!bookData.title || !bookData.author || !bookData.user_id) {
+        throw new Error('Missing required fields: title, author');
+        }
+
         // 2. Insert book into database
-        // 3. Return the new book ID
-
-        // PLACEHOLDER: Remove this and implement actual logic
-        throw new Error('Book creation not implemented yet');
-
-        // EXAMPLE IMPLEMENTATION STRUCTURE:
-        /*
         const sql = `
             INSERT INTO books (title, author, genre, status, notes, user_id)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -286,9 +262,8 @@ async function createBook(bookData) {
         ];
 
         const result = await executeModifyQuery(sql, params);
+        // 3. Return the new book ID
         return result.id;
-        */
-
     } catch (error) {
         console.error('Error creating book:', error);
         throw error;
@@ -305,23 +280,13 @@ async function getBooksByUserId(userId, filters = {}) {
     try {
         // TODO: Implement book retrieval with filtering
         // 1. Build SQL query with WHERE clauses for filters
-        // 2. Handle search functionality (title and author)
-        // 3. Return array of books for the user
-
-        // PLACEHOLDER: Remove this and implement actual logic
-        throw new Error('Get books by user ID not implemented yet');
-
-        // EXAMPLE IMPLEMENTATION STRUCTURE:
-        /*
-        let sql = `
+            let sql = `
             SELECT id, title, author, genre, status, notes, created_at, updated_at
             FROM books
             WHERE user_id = ?
         `;
-
-        const params = [userId];
-
-        // Add filters
+         const params = [userId];
+        // 2. Handle search functionality (title and author)
         if (filters.status) {
             sql += ' AND status = ?';
             params.push(filters.status);
@@ -339,9 +304,8 @@ async function getBooksByUserId(userId, filters = {}) {
         }
 
         sql += ' ORDER BY created_at DESC';
-
+        // 3. Return array of books for the user
         return await executeQuery(sql, params);
-        */
 
     } catch (error) {
         console.error('Error getting books by user ID:', error);
@@ -358,22 +322,13 @@ async function getBookById(bookId) {
     try {
         // TODO: Implement single book retrieval
         // 1. Query database for book with given ID
-        // 2. Return book object with all fields
-
-        // PLACEHOLDER: Remove this and implement actual logic
-        throw new Error('Get book by ID not implemented yet');
-
-        // EXAMPLE IMPLEMENTATION STRUCTURE:
-        /*
         const sql = `
             SELECT id, title, author, genre, status, notes, user_id, created_at, updated_at
             FROM books
             WHERE id = ?
         `;
-
+        // 2. Return book object with all fields
         return await executeQuerySingle(sql, [bookId]);
-        */
-
     } catch (error) {
         console.error('Error getting book by ID:', error);
         throw error;
@@ -390,20 +345,12 @@ async function updateBook(bookId, updateData) {
     try {
         // TODO: Implement book update
         // 1. Build UPDATE query with provided fields
-        // 2. Update the updated_at timestamp
-        // 3. Return success status
-
-        // PLACEHOLDER: Remove this and implement actual logic
-        throw new Error('Book update not implemented yet');
-
-        // EXAMPLE IMPLEMENTATION STRUCTURE:
-        /*
         const sql = `
             UPDATE books
             SET title = ?, author = ?, genre = ?, status = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         `;
-
+        // 2. Update the updated_at timestamp
         const params = [
             updateData.title,
             updateData.author,
@@ -414,9 +361,8 @@ async function updateBook(bookId, updateData) {
         ];
 
         const result = await executeModifyQuery(sql, params);
+        // 3. Return success status
         return result.changes > 0;
-        */
-
     } catch (error) {
         console.error('Error updating book:', error);
         throw error;
@@ -432,18 +378,10 @@ async function deleteBook(bookId) {
     try {
         // TODO: Implement book deletion
         // 1. Delete book from database
-        // 2. Return success status
-
-        // PLACEHOLDER: Remove this and implement actual logic
-        throw new Error('Book deletion not implemented yet');
-
-        // EXAMPLE IMPLEMENTATION STRUCTURE:
-        /*
         const sql = 'DELETE FROM books WHERE id = ?';
         const result = await executeModifyQuery(sql, [bookId]);
+        // 2. Return success status
         return result.changes > 0;
-        */
-
     } catch (error) {
         console.error('Error deleting book:', error);
         throw error;

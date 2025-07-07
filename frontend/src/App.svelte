@@ -21,7 +21,7 @@
     // TODO: Import page components
     import Login from './routes/Login.svelte';
     import Register from './routes/Register.svelte';
-    // import MyBooks from './routes/MyBooks.svelte';
+    import MyBooks from './routes/MyBooks.svelte';
     // import PublicBooks from './routes/PublicBooks.svelte';
 
     // TODO: Import reusable components
@@ -308,7 +308,7 @@
                     <p>Welcome back, {currentUser?.username || 'Reader'}!</p>
 
                     <!-- TODO: Replace with MyBooks component -->
-                    <!-- <MyBooks /> -->
+                    <MyBooks />
 
                     <!-- Placeholder books view -->
                     <div class="placeholder-content">
