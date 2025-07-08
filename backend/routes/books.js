@@ -84,94 +84,6 @@ const bookIdValidation = [
 // =============================================================================
 
 /**
- * GET /api/books
- * Get all books for the authenticated user
- *
- * Query parameters:
- * - status: filter by reading status (optional)
- * - genre: filter by genre (optional)
- * - search: search in title and author (optional)
- */
-router.get('/', requireAuth, async (req, res) => {
-    try {
-        const userId = req.session.userId;
-        const { status, genre, search } = req.query;
-
-        // TODO: Implement user's books retrieval with filtering
-        const filters = {};
-        if (status) filters.status = status;
-        if (genre) filters.genre = genre;
-        if (search) filters.search = search;
-
-        const books = await getBooksByUserId(userId, filters);
-
-        res.json({
-            books: books,
-            count: books.length,
-            filters: filters
-        });
-    } catch (error) {
-        console.error('Error fetching books:', error);
-        res.status(500).json({
-            error: 'Internal server error fetching books'
-        });
-    }
-});
-
-/**
- * POST /api/books
- * Create a new book for the authenticated user
- *
- * Expected body:
- * {
- *   "title": "string (required)",
- *   "author": "string (optional)",
- *   "genre": "string (optional)",
- *   "status": "to-read|reading|read (optional, default: to-read)",
- *   "notes": "string (optional)"
- * }
- */
-router.post('/', requireAuth, bookValidation, async (req, res) => {
-    try {
-        // Check for validation errors
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({
-                error: 'Validation failed',
-                details: errors.array()
-            });
-        }
-
-        const userId = req.session.userId;
-        const { title, author, genre, status = 'to-read', notes } = req.body;
-
-        // TODO: Implement book creation
-        // 1. Validate and sanitise input data
-        const bookData = {
-        title: title.trim(),
-        author: author ? author.trim() : null,
-        genre: genre ? genre.trim() : null,
-        status,
-        notes: notes ? notes.trim() : null,
-        user_id: userId
-        };
-        // 2. Create book in database
-        const bookId = await createBook(bookData);
-        const createdBook = await getBookById(bookId);
-        // 4. Return created book data
-        res.status(201).json({
-            message: 'Book created successfully',
-            book: createdBook
-        });
-    } catch (error) {
-        console.error('Error creating book:', error);
-        res.status(500).json({
-            error: 'Internal server error creating book'
-        });
-    }
-});
-
-/**
  * GET /api/books/:id
  * Get a specific book by ID (only if it belongs to the authenticated user)
  */
@@ -206,6 +118,75 @@ router.get('/:id', requireAuth, bookIdValidation, async (req, res) => {
         res.status(500).json({
             error: 'Internal server error fetching book'
         });
+    }
+});
+
+// GET /api/books - Fetch all books for authenticated user
+router.get('/', requireAuth, async (req, res) => {
+  try {
+    // 1. Get books from database using the user's ID from session
+    const books = await getBooksByUserId(req.session.userId);
+
+    // 2. Always return an array (empty if no books) to prevent undefined errors
+    res.json({ books: books || [] });
+
+  } catch (error) {
+    // NEW: Proper error handling instead of 501 placeholder
+    console.error('GET /books error:', error);
+    res.status(500).json({
+      error: "Failed to fetch books",
+      // Only include stack trace in development
+      ...(process.env.NODE_ENV === 'development' && { details: error.message })
+    });
+  }
+});
+
+// POST /api/books - Create a new book
+
+router.post('/',
+  requireAuth,
+  bookValidation,
+  async (req, res) => {
+    try {
+      // 1. Create book with EXPLICIT fields (don't spread req.body)
+      const book = await createBook({
+        title: req.body.title,        // Required
+        author: req.body.author || null,  // Explicit default
+        genre: req.body.genre || null,
+        status: req.body.status || 'to-read',
+        notes: req.body.notes || null,
+        user_id: req.session.userId    // Critical
+      });
+
+      // 2. Return ALL fields with consistent structure
+      console.log('📘 Book created:', book);
+      res.status(201).json({
+        id: book.id,                  // MUST include
+        title: book.title,
+        author: book.author,
+        genre: book.genre,
+        status: book.status,
+        notes: book.notes,
+        user_id: book.user_id,
+        created_at: book.created_at
+        // Add any other fields your frontend expects
+      });
+
+    } catch (error) {
+      if (error.name === 'ValidationError') {
+        return res.status(400).json({
+          error: error.message
+        });
+      }
+
+      console.error('Database error:', error);
+      res.status(500).json({
+        error: "Failed to create book",
+        // Only show details in development
+        ...(process.env.NODE_ENV === 'development' && {
+          details: error.message
+        })
+      });
     }
 });
 

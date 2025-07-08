@@ -240,35 +240,57 @@ async function findUserById(userId) {
  */
 async function createBook(bookData) {
     try {
-        // TODO: Implement book creation
-        // 1. Validate book data
-        if (!bookData.title || !bookData.author || !bookData.user_id) {
-        throw new Error('Missing required fields: title, author');
+        if (!bookData.title || !bookData.user_id) {
+            throw new Error('Missing required fields: title, user_id');
         }
 
-        // 2. Insert book into database
-        const sql = `
+        const insertSql = `
             INSERT INTO books (title, author, genre, status, notes, user_id)
             VALUES (?, ?, ?, ?, ?, ?)
         `;
 
         const params = [
             bookData.title,
-            bookData.author,
-            bookData.genre,
+            bookData.author || null,
+            bookData.genre || null,
             bookData.status || 'to-read',
-            bookData.notes,
+            bookData.notes || null,
             bookData.user_id
         ];
 
-        const result = await executeModifyQuery(sql, params);
-        // 3. Return the new book ID
-        return result.id;
+        // Insert the book
+        const result = await executeModifyQuery(insertSql, params);
+
+        if (!result.id) {
+            throw new Error('Insert failed: No ID returned');
+        }
+
+        console.log('✅ Inserted book ID:', result.id);
+
+        // Try to fetch the inserted book
+        let book = await executeQuerySingle(`SELECT * FROM books WHERE id = ?`, [result.id]);
+
+        // Retry once if not found
+        if (!book) {
+            console.warn('⚠️ Book not found immediately after insert. Retrying...');
+            await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
+            book = await executeQuerySingle(`SELECT * FROM books WHERE id = ?`, [result.id]);
+        }
+
+        if (!book) {
+            throw new Error('Inserted book could not be retrieved');
+        }
+
+        console.log('📘 Retrieved book:', book);
+
+        return book;
+
     } catch (error) {
-        console.error('Error creating book:', error);
+        console.error('❌ Error creating book:', error);
         throw error;
     }
 }
+
 
 /**
  * Get books by user ID with optional filtering
