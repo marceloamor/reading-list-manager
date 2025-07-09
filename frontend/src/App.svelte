@@ -15,10 +15,10 @@
     // Import necessary stores and components
     import { onMount } from 'svelte';
 
-    // TODO: Import authentication store
-    // import { authStore, checkAuthStatus } from './stores/auth.js';
+    // Import authentication store
+    import { authStore } from './stores/auth.js';
 
-    // TODO: Import page components
+    // Import page components
     import Login from './routes/Login.svelte';
     import Register from './routes/Register.svelte';
     import MyBooks from './routes/MyBooks.svelte';
@@ -30,7 +30,7 @@
 
     // Props passed from main.js
     export let version = '1.0.0';
-    export let apiUrl = '/api';
+    export const apiUrl = '/api';
 
     // =============================================================================
     // STATE MANAGEMENT
@@ -46,13 +46,11 @@
     // Error states
     let appError = null;
 
-    // User authentication state
-    let isAuthenticated = false;
-    let currentUser = null;
-
-    // TODO: Subscribe to authentication store
-    // $: isAuthenticated = $authStore.isAuthenticated;
-    // $: currentUser = $authStore.user;
+    // Subscribe to auth store
+    $: isAuthenticated = $authStore.isAuthenticated;
+    $: currentUser = $authStore.user;
+    $: authLoading = $authStore.isLoading;
+    $: authError = $authStore.error;
 
     // =============================================================================
     // ROUTING LOGIC
@@ -108,8 +106,8 @@
         try {
             console.log('🎯 Initialising Reading List Manager...');
 
-            // TODO: Check authentication status
-            // await checkAuthStatus();
+            // Check authentication status with backend
+            await authStore.checkAuthStatus();
 
             // Parse current route
             currentPage = parseRoute();
@@ -142,21 +140,16 @@
      * Handle successful login
      */
     function handleLoginSuccess(user) {
-        // TODO: Implement login success handling
         console.log('Login successful:', user);
-        currentUser = user;
-        isAuthenticated = true;
         handleNavigation('my-books');
     }
 
     /**
      * Handle logout
      */
-    function handleLogout() {
-        // TODO: Implement logout handling
+    async function handleLogout() {
         console.log('Logging out...');
-        currentUser = null;
-        isAuthenticated = false;
+        await authStore.logout();
         handleNavigation('login');
     }
 
@@ -164,10 +157,7 @@
      * Handle registration success
      */
     function handleRegisterSuccess(user) {
-        // TODO: Implement registration success handling
         console.log('Registration successful:', user);
-        currentUser = user;
-        isAuthenticated = true;
         handleNavigation('my-books');
     }
 

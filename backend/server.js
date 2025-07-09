@@ -32,8 +32,8 @@ const { initializeDatabase } = require('./utils/db');
 // Create Express application instance
 const app = express();
 
-// Set the port from environment variable or default to 3000
-const PORT = process.env.PORT || 3000;
+// Set the port from environment variable or default to 3001
+const PORT = process.env.PORT || 3001;
 
 // =============================================================================
 // MIDDLEWARE CONFIGURATION

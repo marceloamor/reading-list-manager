@@ -115,22 +115,22 @@ router.post('/register', registerValidation, async (req, res) => {
 
         // 2. Check if username already exists
         const existingUser = await findUserByUsername(username);
-        if (existingUser){
+        if (existingUser) {
             return res.status(409).json({
-                error:'Username already exists'
-            })
+                error: 'Username already exists'
+            });
         }
         // 3. Hash the password using bcrypt
         const saltRounds = 12;
         const passwordHash = await bcrypt.hash(password, saltRounds);
         // 4. Create the user in the database
-        const userId = await createUser(username, passwordHash)
+        const userId = await createUser(username, passwordHash);
         // 5. Create a session for the new user
         req.session.userId = userId;
         req.session.username = username;
         // 6. Return success response
         res.status(201).json({
-            message:'User registered successfully',
+            message: 'User registered successfully',
             user: {
                 id: userId,
                 username
@@ -186,7 +186,7 @@ router.post('/login', loginValidation, async (req, res) => {
         req.session.userId = user.id;
         req.session.username = user.username;
         // 4. Return user data
-                res.json({
+        res.json({
             message: 'Login successful',
             user: {
                 id: user.id,
@@ -207,20 +207,20 @@ router.post('/login', loginValidation, async (req, res) => {
  */
 router.post('/logout', (req, res) => {
     try {
-        // TODO: Implement logout logic
         // 1. Destroy the user session
-        req.session.destroy((err) =>{
-            if(err){
+        req.session.destroy((err) => {
+            if (err) {
                 console.error('Session destruction error:', err);
                 return res.status(500).json({
                     error: 'Failed to logout'
                 });
             }
-        })
-        // 2. Clear any relevant cookies connect.sid by default
-        res.clearCookie('connect.sid');
-        res.json({
-            message: 'Logout successful'
+            
+            // 2. Clear any relevant cookies connect.sid by default
+            res.clearCookie('connect.sid');
+            res.json({
+                message: 'Logout successful'
+            });
         });
     } catch (error) {
         console.error('Logout error:', error);

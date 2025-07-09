@@ -22,7 +22,8 @@ const {
     getBookById,
     updateBook,
     deleteBook,
-    getPublicBookStats
+    getPublicBookStats,
+    searchPublicBooks
 } = require('../utils/db');
 
 // Import authentication middleware
@@ -78,6 +79,78 @@ const bookIdValidation = [
         .isInt({ min: 1 })
         .withMessage('Book ID must be a positive integer')
 ];
+
+// =============================================================================
+// PUBLIC ROUTES (no authentication required) - MUST BE FIRST
+// =============================================================================
+
+/**
+ * GET /api/books/public
+ * Get anonymised book statistics across all users
+ *
+ * Returns data like:
+ * - Most popular books (by times added)
+ * - Most popular genres
+ * - Reading status distribution
+ * - Top authors
+ */
+router.get('/public', async (req, res) => {
+    try {
+        // Get aggregated, anonymised statistics
+        const stats = await getPublicBookStats();
+
+        res.json({
+            popular_books: stats.popular_books,
+            popular_genres: stats.popular_genres,
+            popular_authors: stats.popular_authors,
+            reading_status_distribution: stats.status_distribution,
+            total_books: stats.total_books,
+            total_users: stats.total_users
+        });
+
+    } catch (error) {
+        console.error('Error fetching public book statistics:', error);
+        res.status(500).json({
+            error: 'Internal server error fetching book statistics'
+        });
+    }
+});
+
+/**
+ * GET /api/books/public/search
+ * Search for books across all users (anonymised results)
+ *
+ * Query parameters:
+ * - q: search query
+ * - genre: filter by genre
+ */
+router.get('/public/search', async (req, res) => {
+    try {
+        const { q: query, genre } = req.query;
+
+        if (!query || query.trim().length < 2) {
+            return res.status(400).json({
+                error: 'Search query must be at least 2 characters long'
+            });
+        }
+
+        // Search books with optional genre filter
+        const searchResults = await searchPublicBooks(query.trim(), { genre });
+
+        res.json({
+            query: query,
+            filters: { genre: genre || null },
+            results: searchResults,
+            count: searchResults.length
+        });
+
+    } catch (error) {
+        console.error('Error searching public books:', error);
+        res.status(500).json({
+            error: 'Internal server error searching books'
+        });
+    }
+});
 
 // =============================================================================
 // AUTHENTICATED ROUTES (require login)
@@ -284,117 +357,6 @@ router.delete('/:id', requireAuth, bookIdValidation, async (req, res) => {
         console.error('Error deleting book:', error);
         res.status(500).json({
             error: 'Internal server error deleting book'
-        });
-    }
-});
-
-// =============================================================================
-// PUBLIC ROUTES (no authentication required)
-// =============================================================================
-
-/**
- * GET /api/books/public
- * Get anonymised book statistics across all users
- *
- * Returns data like:
- * - Most popular books (by times added)
- * - Most popular genres
- * - Reading status distribution
- * - Top authors
- */
-router.get('/public', async (req, res) => {
-    try {
-        // TODO: Implement public book statistics
-        // 1. Query database for aggregated, anonymised data
-        // 2. Calculate popular books, genres, authors
-        // 3. Return statistics without revealing user information
-
-        // PLACEHOLDER: Remove this and implement actual logic
-        res.status(501).json({
-            error: 'Public book statistics not implemented yet',
-            todo: [
-                'Aggregate book data across all users',
-                'Calculate popular books and genres',
-                'Ensure no user data is revealed',
-                'Return anonymised statistics'
-            ]
-        });
-
-        // EXAMPLE IMPLEMENTATION STRUCTURE:
-        /*
-        const stats = await getPublicBookStats();
-
-        res.json({
-            popular_books: stats.popular_books, // Most added books
-            popular_genres: stats.popular_genres, // Most popular genres
-            popular_authors: stats.popular_authors, // Most popular authors
-            reading_status_distribution: stats.status_distribution,
-            total_books: stats.total_books,
-            total_users: stats.total_users
-        });
-        */
-
-    } catch (error) {
-        console.error('Error fetching public book statistics:', error);
-        res.status(500).json({
-            error: 'Internal server error fetching book statistics'
-        });
-    }
-});
-
-/**
- * GET /api/books/public/search
- * Search for books across all users (anonymised results)
- *
- * Query parameters:
- * - q: search query
- * - genre: filter by genre
- */
-router.get('/public/search', async (req, res) => {
-    try {
-        const { q: query, genre } = req.query;
-
-        if (!query || query.trim().length < 2) {
-            return res.status(400).json({
-                error: 'Search query must be at least 2 characters long'
-            });
-        }
-
-        // TODO: Implement public book search
-        // 1. Search books by title and author
-        // 2. Apply genre filter if provided
-        // 3. Return anonymised results (no user information)
-        // 4. Include popularity metrics
-
-        // PLACEHOLDER: Remove this and implement actual logic
-        res.status(501).json({
-            error: 'Public book search not implemented yet',
-            todo: [
-                'Search books by title/author',
-                'Apply genre filtering',
-                'Return anonymised results',
-                'Include popularity scores'
-            ],
-            query: query,
-            genre: genre
-        });
-
-        // EXAMPLE IMPLEMENTATION STRUCTURE:
-        /*
-        const searchResults = await searchPublicBooks(query, { genre });
-
-        res.json({
-            query: query,
-            filters: { genre },
-            results: searchResults,
-            count: searchResults.length
-        });
-        */
-
-    } catch (error) {
-        console.error('Error searching public books:', error);
-        res.status(500).json({
-            error: 'Internal server error searching books'
         });
     }
 });

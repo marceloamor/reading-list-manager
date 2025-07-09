@@ -1,128 +1,92 @@
 <script>
+    import { authStore } from '../stores/auth.js';
+    
     export let onSuccess;
-    // Variables to track state
+
+    // Form data
     let username = '';
     let password = '';
-    let confirm_password = '';
-    let error = '';
-    let success = false;
-    let passwordRequirements = null;
+    let confirmPassword = '';
 
-    // Reactive block to update password rule checks as user types
-    $: if (password) {
-        passwordRequirements = {
-            length: password.length >= 6,
-            hasUppercase: /[A-Z]/.test(password),
-            hasLowercase: /[a-z]/.test(password),
-            hasNumber: /\d/.test(password),
-            hasSymbol: /[!@#$%^&*(),.?":{}|<>]/.test(password),
-        };
-    } else {
-        passwordRequirements = null;
+    // Subscribe to auth store
+    $: authError = $authStore.error;
+    $: authLoading = $authStore.isLoading;
+
+    // Validation state
+    let errors = {};
+    let showValidation = false;
+
+    // Reactive validation
+    $: {
+        errors = {};
+        if (showValidation) {
+            validateForm();
+        }
     }
 
-    $: passwordValid = passwordRequirements
-        ? Object.values(passwordRequirements).every(Boolean)
-        : false;
-
-    $: usernameRequirements = {
-        minLength: username.length >= 3,
-        noSpaces: !/\s/.test(username),
-    };
-
-    $: usernameValid = usernameRequirements
-        ? Object.values(usernameRequirements).every(Boolean)
-        : false;
-
-    $: confirmPasswordValid =
-        confirm_password === password && password.length > 0;
-
-    // handle register
-    const handleRegister = async () => {
-        // Ensure error and success state variables correct
-        if (error) {
-            error = '';
-        }
-        if (success) {
-            success = false;
+    function validateForm() {
+        // Username validation
+        if (!username.trim()) {
+            errors.username = 'Username is required';
+        } else if (username.length < 3) {
+            errors.username = 'Username must be at least 3 characters';
         }
 
-        // Check passwords match
-        if (password !== confirm_password) {
-            error = 'Passwords do not match';
+        // Password validation
+        if (!password) {
+            errors.password = 'Password is required';
+        } else if (password.length < 6) {
+            errors.password = 'Password must be at least 6 characters';
+        }
+
+        // Confirm password validation
+        if (!confirmPassword) {
+            errors.confirmPassword = 'Please confirm your password';
+        } else if (password !== confirmPassword) {
+            errors.confirmPassword = 'Passwords do not match';
+        }
+    }
+
+    async function handleRegister() {
+        showValidation = true;
+        validateForm();
+
+        // Check if form is valid
+        if (Object.keys(errors).length > 0) {
             return;
         }
 
-        try {
-            const res = await fetch('http://localhost:3001/api/auth/register', {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username,
-                    password,
-                    confirmPassword: confirm_password,
-                }),
-            });
-            // Check if registration was successful
-            if (!res.ok) {
-                const errorData = await res.json();
-                error = errorData.message || 'Registration Failed';
+        // Clear previous auth errors
+        authStore.clearError();
 
-                // Show username/password validation details
-                if (errorData.details && Array.isArray(errorData.details)) {
-                    error = errorData.details
-                        .map((detail) => detail.msg)
-                        .join(', ');
-                }
+        const result = await authStore.register({
+            username,
+            password,
+            confirmPassword
+        });
 
-                // Handle password strength failure
-                if (errorData.requirements) {
-                    passwordRequirements = errorData.requirements;
-                } else {
-                    passwordRequirements = null;
-                }
-
-                return;
-            }
-            // If successful than auto login
-            success = true;
-            const loginReg = await fetch(
-                'http://localhost:3001/api/auth/login',
-                {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ username, password }),
-                }
-            );
-            // Handle if the login fails
-            if (!loginReg.ok) {
-                error = 'Registration succeeded but login failed';
-                return;
-            }
-            // After login redirect to my-books page
+        if (result.success) {
+            // Clear form
+            username = '';
+            password = '';
+            confirmPassword = '';
+            showValidation = false;
+            
+            // Notify parent component
             if (onSuccess) {
                 onSuccess({ username });
-            } else {
-                window.location.hash = 'my-books';
             }
-        } catch (error) {
-            console.error(error);
         }
-    };
+        // Error handling is done automatically by the store
+    }
 </script>
 
 <!-- Registration form -->
 <form on:submit|preventDefault={handleRegister} class="placeholder-form">
     <h3>Register</h3>
 
-    {#if error}
-        <p class="error-message">{error}</p>
+    {#if authError}
+        <p class="error-message">{authError}</p>
     {/if}
 
     <div>
@@ -131,8 +95,8 @@
             id="username"
             type="text"
             bind:value={username}
-            class:valid-input={usernameValid}
-            class:invalid-input={!usernameValid && username.length > 0}
+            class:valid-input={!errors.username}
+            class:invalid-input={errors.username}
             required
         />
     </div>
@@ -143,8 +107,8 @@
             id="password"
             type="password"
             bind:value={password}
-            class:valid-input={passwordValid}
-            class:invalid-input={!passwordValid && password.length > 0}
+            class:valid-input={!errors.password}
+            class:invalid-input={errors.password}
             required
         />
     </div>
@@ -154,52 +118,30 @@
         <input
             id="confirm_password"
             type="password"
-            bind:value={confirm_password}
-            class:valid-input={confirmPasswordValid}
-            class:invalid-input={!confirmPasswordValid &&
-                confirm_password.length > 0}
+            bind:value={confirmPassword}
+            class:valid-input={!errors.confirmPassword}
+            class:invalid-input={errors.confirmPassword}
             required
         />
     </div>
     <!-- Username rules -->
-    {#if username.length > 0 && !usernameValid}
-        <ul class="username-rules">
-            {#if !usernameRequirements.minLength}
-                <li class="invalid">Username must be at least 3 characters</li>
-            {/if}
-            {#if !usernameRequirements.noSpaces}
-                <li class="invalid">Username cannot contain spaces</li>
-            {/if}
-        </ul>
+    {#if errors.username}
+        <p class="invalid">{errors.username}</p>
     {/if}
 
     <!-- Password rules -->
-    {#if passwordRequirements && !passwordValid}
-        <ul class="password-rules">
-            {#if !passwordRequirements.length}
-                <li class="invalid">Minimum 6 characters</li>
-            {/if}
-            {#if !passwordRequirements.hasUppercase}
-                <li class="invalid">At least one uppercase letter</li>
-            {/if}
-            {#if !passwordRequirements.hasLowercase}
-                <li class="invalid">At least one lowercase letter</li>
-            {/if}
-            {#if !passwordRequirements.hasNumber}
-                <li class="invalid">At least one number</li>
-            {/if}
-            {#if !passwordRequirements.hasSymbol}
-                <li class="invalid">At least one special character</li>
-            {/if}
-        </ul>
+    {#if errors.password}
+        <p class="invalid">{errors.password}</p>
     {/if}
 
     <!-- Confirm password rules -->
-    {#if confirm_password.length > 0 && !confirmPasswordValid}
-        <p class="invalid">Passwords do not match</p>
+    {#if errors.confirmPassword}
+        <p class="invalid">{errors.confirmPassword}</p>
     {/if}
 
-    <button type="submit">Register</button>
+    <button type="submit" disabled={authLoading}>
+        {authLoading ? 'Registering...' : 'Register'}
+    </button>
 </form>
 
 <style>
@@ -224,26 +166,16 @@
         outline: none;
     }
 
-    /* Rule list (for username and password) */
-    .username-rules,
-    .password-rules {
-        list-style-type: none;
-        padding-left: 0;
-        margin-top: 0.5rem;
+    /* Error message */
+    .error-message {
+        color: red;
         margin-bottom: 1rem;
-        font-size: 0.9rem;
-        transition: all 0.3s ease;
     }
 
-    /* Valid rule item */
-    .valid {
-        color: green;
-        transition: color 0.3s ease;
-    }
-
-    /* Invalid rule item */
+    /* Invalid message */
     .invalid {
         color: red;
-        transition: color 0.3s ease;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
     }
 </style>

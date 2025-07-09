@@ -420,29 +420,17 @@ async function deleteBook(bookId) {
  */
 async function getPublicBookStats() {
     try {
-        // TODO: Implement public statistics
         // 1. Get most popular books (by count)
-        // 2. Get most popular genres
-        // 3. Get reading status distribution
-        // 4. Get top authors
-        // 5. Ensure no user data is exposed
-
-        // PLACEHOLDER: Remove this and implement actual logic
-        throw new Error('Public book statistics not implemented yet');
-
-        // EXAMPLE IMPLEMENTATION STRUCTURE:
-        /*
-        // Most popular books
         const popularBooks = await executeQuery(`
             SELECT title, author, COUNT(*) as times_added
             FROM books
             GROUP BY title, author
-            HAVING COUNT(*) > 1
-            ORDER BY times_added DESC
+            HAVING COUNT(*) >= 1
+            ORDER BY times_added DESC, title ASC
             LIMIT 10
         `);
 
-        // Most popular genres
+        // 2. Get most popular genres
         const popularGenres = await executeQuery(`
             SELECT genre, COUNT(*) as count
             FROM books
@@ -452,14 +440,15 @@ async function getPublicBookStats() {
             LIMIT 10
         `);
 
-        // Reading status distribution
+        // 3. Get reading status distribution
         const statusDistribution = await executeQuery(`
             SELECT status, COUNT(*) as count
             FROM books
             GROUP BY status
+            ORDER BY count DESC
         `);
 
-        // Top authors
+        // 4. Get top authors
         const topAuthors = await executeQuery(`
             SELECT author, COUNT(*) as book_count
             FROM books
@@ -469,7 +458,7 @@ async function getPublicBookStats() {
             LIMIT 10
         `);
 
-        // Total counts
+        // 5. Get total counts
         const totalBooksResult = await executeQuerySingle('SELECT COUNT(*) as total FROM books');
         const totalUsersResult = await executeQuerySingle('SELECT COUNT(*) as total FROM users');
 
@@ -481,7 +470,6 @@ async function getPublicBookStats() {
             total_books: totalBooksResult.total,
             total_users: totalUsersResult.total
         };
-        */
 
     } catch (error) {
         console.error('Error getting public book statistics:', error);
@@ -497,17 +485,7 @@ async function getPublicBookStats() {
  */
 async function searchPublicBooks(query, filters = {}) {
     try {
-        // TODO: Implement public book search
         // 1. Search books by title and author
-        // 2. Apply genre filter if provided
-        // 3. Return results with popularity metrics
-        // 4. Ensure no user data is exposed
-
-        // PLACEHOLDER: Remove this and implement actual logic
-        throw new Error('Public book search not implemented yet');
-
-        // EXAMPLE IMPLEMENTATION STRUCTURE:
-        /*
         let sql = `
             SELECT title, author, genre, COUNT(*) as popularity
             FROM books
@@ -516,11 +494,13 @@ async function searchPublicBooks(query, filters = {}) {
 
         const params = [`%${query}%`, `%${query}%`];
 
+        // 2. Apply genre filter if provided
         if (filters.genre) {
             sql += ' AND genre = ?';
             params.push(filters.genre);
         }
 
+        // 3. Return results with popularity metrics
         sql += `
             GROUP BY title, author, genre
             ORDER BY popularity DESC, title ASC
@@ -528,7 +508,6 @@ async function searchPublicBooks(query, filters = {}) {
         `;
 
         return await executeQuery(sql, params);
-        */
 
     } catch (error) {
         console.error('Error searching public books:', error);
