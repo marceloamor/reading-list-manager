@@ -1,9 +1,9 @@
 /**
  * Main Express Server Configuration
- * 
+ *
  * This file sets up the Express.js server for the Reading List Manager application.
  * It includes middleware configuration, route setup, and server initialisation.
- * 
+ *
  * Learning Notes:
  * - Express.js is a web framework for Node.js
  * - Middleware functions run between the request and response
@@ -48,7 +48,7 @@ app.use(helmet());
 /**
  * CORS (Cross-Origin Resource Sharing) Configuration
  * This allows the frontend (running on a different port) to make requests to the backend
- * 
+ *
  * TODO: Configure CORS properly for your frontend URL
  * Currently allows all origins - restrict this in production!
  */
@@ -90,7 +90,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 /**
  * Session Configuration
  * Sessions allow us to store user data between requests
- * 
+ *
  * TODO: Implement session configuration
  * - Set up a secure session secret
  * - Configure session store (for production, consider using a database)
@@ -98,11 +98,12 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
  */
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your-super-secret-key-change-this-in-production',
-    resave: false,
+    resave: true, // changed from false
     saveUninitialized: false,
     cookie: {
         secure: process.env.NODE_ENV === 'production', // HTTPS only in production
         httpOnly: true, // Prevent XSS attacks
+        sameSite: 'lax', // Crucial for session persistence
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
 }));
@@ -185,7 +186,7 @@ app.use((req, res) => {
 /**
  * Global Error Handler
  * Catches and handles any errors that occur in the application
- * 
+ *
  * TODO: Implement comprehensive error handling
  * - Log errors appropriately
  * - Send appropriate error responses
@@ -236,4 +237,4 @@ async function startServer() {
 startServer();
 
 // Export the app for testing purposes
-module.exports = app; 
+module.exports = app;
