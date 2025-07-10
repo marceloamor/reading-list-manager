@@ -1,16 +1,4 @@
-/**
- * Book Management Routes
- *
- * This file handles all book-related operations including:
- * - CRUD operations for user's personal books
- * - Public statistics endpoint for anonymised book data
- * - Input validation and user authorization
- *
- * Learning Notes:
- * - CRUD stands for Create, Read, Update, Delete
- * - All personal book operations require authentication
- * - Public endpoints don't require authentication but return anonymised data
- */
+// Book management routes and public statistics
 
 const express = require('express');
 const { body, validationResult, param } = require('express-validator');
@@ -32,13 +20,7 @@ const { requireAuth } = require('../middleware/auth');
 // Create router instance
 const router = express.Router();
 
-// =============================================================================
-// VALIDATION RULES
-// =============================================================================
-
-/**
- * Validation rules for creating/updating books
- */
+// validation rules for creating/updating books
 const bookValidation = [
     body('title')
         .trim()
@@ -71,32 +53,25 @@ const bookValidation = [
         .withMessage('Notes must not exceed 1000 characters')
 ];
 
-/**
- * Validation for book ID parameter
- */
+// validation for book ID parameter
 const bookIdValidation = [
     param('id')
         .isInt({ min: 1 })
         .withMessage('Book ID must be a positive integer')
 ];
 
-// =============================================================================
-// PUBLIC ROUTES (no authentication required) - MUST BE FIRST
-// =============================================================================
+// public routes (no authentication required)
 
-/**
- * GET /api/books/public
- * Get anonymised book statistics across all users
- *
- * Returns data like:
- * - Most popular books (by times added)
- * - Most popular genres
- * - Reading status distribution
- * - Top authors
- */
+// GET /api/books/public
+// get anonymised book statistics across all users
+// returns data like:
+// - most popular books (by times added)
+// - most popular genres
+// - reading status distribution
+// - top authors
 router.get('/public', async (req, res) => {
     try {
-        // Get aggregated, anonymised statistics
+        // get aggregated, anonymised statistics
         const stats = await getPublicBookStats();
 
         res.json({
@@ -116,14 +91,11 @@ router.get('/public', async (req, res) => {
     }
 });
 
-/**
- * GET /api/books/public/search
- * Search for books across all users (anonymised results)
- *
- * Query parameters:
- * - q: search query
- * - genre: filter by genre
- */
+// GET /api/books/public/search
+// search for books across all users (anonymised results)
+// query parameters:
+// - q: search query
+// - genre: filter by genre
 router.get('/public/search', async (req, res) => {
     try {
         const { q: query, genre } = req.query;
@@ -152,14 +124,10 @@ router.get('/public/search', async (req, res) => {
     }
 });
 
-// =============================================================================
-// AUTHENTICATED ROUTES (require login)
-// =============================================================================
+// authenticated routes (require login)
 
-/**
- * GET /api/books/:id
- * Get a specific book by ID (only if it belongs to the authenticated user)
- */
+// GET /api/books/:id
+// get a specific book by ID (only if it belongs to the authenticated user)
 router.get('/:id', requireAuth, bookIdValidation, async (req, res) => {
     try {
         // Check for validation errors
@@ -174,10 +142,9 @@ router.get('/:id', requireAuth, bookIdValidation, async (req, res) => {
         const userId = req.session.userId;
         const bookId = parseInt(req.params.id);
 
-        // TODO: Implement single book retrieval
-        // 1. Get book from database by ID
+        // get book from database by ID
         const book = await getBookById(bookId);
-        // 2. Check if book belongs to authenticated user
+        // check if book belongs to authenticated user
         if (!book) {
             return res.status(404).json({ error: 'Book not found' });
         }
@@ -197,14 +164,14 @@ router.get('/:id', requireAuth, bookIdValidation, async (req, res) => {
 // GET /api/books - Fetch all books for authenticated user
 router.get('/', requireAuth, async (req, res) => {
   try {
-    // 1. Get books from database using the user's ID from session
+    // get books from database using the user's ID from session
     const books = await getBooksByUserId(req.session.userId);
 
-    // 2. Always return an array (empty if no books) to prevent undefined errors
+    // always return an array (empty if no books) to prevent undefined errors
     res.json({ books: books || [] });
 
   } catch (error) {
-    // NEW: Proper error handling instead of 501 placeholder
+    // proper error handling instead of 501 placeholder
     console.error('GET /books error:', error);
     res.status(500).json({
       error: "Failed to fetch books",
@@ -221,7 +188,7 @@ router.post('/',
   bookValidation,
   async (req, res) => {
     try {
-      // 1. Create book with EXPLICIT fields (don't spread req.body)
+      // create book 
       const book = await createBook({
         title: req.body.title,        // Required
         author: req.body.author || null,  // Explicit default
@@ -231,7 +198,7 @@ router.post('/',
         user_id: req.session.userId    // Critical
       });
 
-      // 2. Return ALL fields with consistent structure
+      // return ALL fields with consistent structure
       console.log('📘 Book created:', book);
       res.status(201).json({
         id: book.id,                  // MUST include
@@ -242,7 +209,6 @@ router.post('/',
         notes: book.notes,
         user_id: book.user_id,
         created_at: book.created_at
-        // Add any other fields your frontend expects
       });
 
     } catch (error) {
@@ -255,7 +221,7 @@ router.post('/',
       console.error('Database error:', error);
       res.status(500).json({
         error: "Failed to create book",
-        // Only show details in development
+        // Only show details in dev env
         ...(process.env.NODE_ENV === 'development' && {
           details: error.message
         })
@@ -263,12 +229,9 @@ router.post('/',
     }
 });
 
-/**
- * PUT /api/books/:id
- * Update a specific book (only if it belongs to the authenticated user)
- *
- * Expected body: Same as POST /api/books
- */
+// PUT /api/books/:id
+// update a specific book (only if it belongs to the authenticated user)
+// expected body: same as POST /api/books
 router.put('/:id', requireAuth, bookIdValidation, bookValidation, async (req, res) => {
     try {
         // Check for validation errors
@@ -284,8 +247,7 @@ router.put('/:id', requireAuth, bookIdValidation, bookValidation, async (req, re
         const bookId = parseInt(req.params.id);
         const { title, author, genre, status, notes } = req.body;
 
-        // TODO: Implement book update
-        // 1. Check if book exists and belongs to user
+        // check if book exists and belongs to user
         const existingBook = await getBookById(bookId);
         if (!existingBook) {
             return res.status(404).json({ error: 'Book not found' });
@@ -293,7 +255,7 @@ router.put('/:id', requireAuth, bookIdValidation, bookValidation, async (req, re
         if (existingBook.user_id !== userId) {
             return res.status(403).json({ error: 'Access denied: This book belongs to another user' });
         }
-        // 2. Update book data in database
+        // update book data in database
         const updateData = {
             title: title.trim(),
             author: author ? author.trim() : null,
@@ -301,7 +263,7 @@ router.put('/:id', requireAuth, bookIdValidation, bookValidation, async (req, re
             status,
             notes: notes ? notes.trim() : null
         };
-        // 3. Return updated book data
+        // return updated book data
         await updateBook(bookId, updateData);
         const updatedBook = await getBookById(bookId);
 
@@ -317,10 +279,8 @@ router.put('/:id', requireAuth, bookIdValidation, bookValidation, async (req, re
     }
 });
 
-/**
- * DELETE /api/books/:id
- * Delete a specific book (only if it belongs to the authenticated user)
- */
+// DELETE /api/books/:id
+// delete a specific book (only if it belongs to the authenticated user)
 router.delete('/:id', requireAuth, bookIdValidation, async (req, res) => {
     try {
         // Check for validation errors
@@ -335,8 +295,7 @@ router.delete('/:id', requireAuth, bookIdValidation, async (req, res) => {
         const userId = req.session.userId;
         const bookId = parseInt(req.params.id);
 
-        // TODO: Implement book deletion
-        // 1. Check if book exists and belongs to user
+        // check if book exists and belongs to user
         const book = await getBookById(bookId);
 
         if (!book) {
@@ -346,9 +305,9 @@ router.delete('/:id', requireAuth, bookIdValidation, async (req, res) => {
         if (book.user_id !== userId) {
             return res.status(403).json({ error: 'Access denied: This book belongs to another user' });
         }
-        // 2. Delete book from database
+        // delete book from database
         await deleteBook(bookId);
-        // 3. Return success message
+        // return success message
         res.json({
             message: 'Book deleted successfully',
             deletedBookId: bookId
@@ -361,19 +320,13 @@ router.delete('/:id', requireAuth, bookIdValidation, async (req, res) => {
     }
 });
 
-// =============================================================================
 // HELPER FUNCTIONS
-// =============================================================================
 
-/**
- * Helper function to sanitise book data
- */
+// sanitise book data
 function sanitiseBookData(bookData) {
-    // TODO: Implement data sanitisation
-    // - Trim whitespace
-    // - Validate data types
-    // - Handle null/undefined values
-    // - Prevent XSS attacks
+    // - trim whitespace
+    // - validate data types
+    // - handle null/undefined values
 
     return {
         title: bookData.title ? bookData.title.trim() : '',
@@ -384,14 +337,11 @@ function sanitiseBookData(bookData) {
     };
 }
 
-/**
- * Helper function to validate book ownership
- */
+// helper function to validate book ownership
 async function validateBookOwnership(bookId, userId) {
-    // TODO: Implement ownership validation
-    // - Check if book exists
-    // - Verify it belongs to the user
-    // - Return appropriate error if not
+    // check if book exists
+    // verify it belongs to the user
+    // return appropriate error if not
 
     try {
         const book = await getBookById(bookId);
@@ -411,3 +361,4 @@ async function validateBookOwnership(bookId, userId) {
 }
 
 module.exports = router;
+ 

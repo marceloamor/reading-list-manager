@@ -1,14 +1,4 @@
-/**
- * Authentication Routes
- *
- * This file handles user authentication including registration, login, and logout.
- * It includes password hashing, session management, and input validation.
- *
- * Learning Notes:
- * - bcryptjs is used for secure password hashing
- * - express-validator helps with input validation
- * - Sessions store user information between requests
- */
+// Authentication routes for user registration, login, and logout
 
 const express = require('express');
 const bcrypt = require('bcryptjs');
@@ -27,14 +17,7 @@ const { requireAuth } = require('../middleware/auth');
 // Create router instance
 const router = express.Router();
 
-// =============================================================================
-// VALIDATION RULES
-// =============================================================================
-
-/**
- * Validation rules for user registration
- * These define the requirements for valid input data
- */
+// validation rules for user registration
 const registerValidation = [
     body('username')
         .isLength({ min: 3, max: 30 })
@@ -57,9 +40,7 @@ const registerValidation = [
         })
 ];
 
-/**
- * Validation rules for user login
- */
+// validation rules for user login
 const loginValidation = [
     body('username')
         .notEmpty()
@@ -70,13 +51,12 @@ const loginValidation = [
         .withMessage('Password is required')
 ];
 
-// =============================================================================
-// ROUTE HANDLERS
-// =============================================================================
+// route handlers
 
 /**
- * POST /api/auth/register
- * Register a new user account
+ * EXPECTED JSON PAYLOAD:
+ * POST /api/auth/register 
+ * register a new user account
  *
  * Expected body:
  * {
@@ -90,22 +70,20 @@ router.post('/register', registerValidation, async (req, res) => {
         // Check for validation errors
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            console.log('❌ Validation errors:', errors.array());
+            console.log('Validation errors:', errors.array());
             return res.status(400).json({
                 error: 'Validation failed',
                 details: errors.array()
             });
         }
 
-        // Log the incoming form data
-        console.log('📨 Incoming register payload:', req.body);
+        console.log('Incoming register payload:', req.body);
 
         const { username, password } = req.body;
 
-        // TODO: Implement user registration logic
-        // 1. Check the password strength
+        // Check the password strength
         const{ isStrong, requirements } = checkPasswordStrength(password);
-        console.log('🔍 Password strength check:', { isStrong, requirements });
+        console.log('Password strength check:', { isStrong, requirements });
         if(!isStrong){
             return res.status(400).json({
                 error: 'Password is too weak',
@@ -120,7 +98,7 @@ router.post('/register', registerValidation, async (req, res) => {
                 error: 'Username already exists'
             });
         }
-        // 3. Hash the password using bcrypt
+        // 3. Hash the password using bcrypt functionality
         const saltRounds = 12;
         const passwordHash = await bcrypt.hash(password, saltRounds);
         // 4. Create the user in the database
@@ -148,7 +126,7 @@ router.post('/register', registerValidation, async (req, res) => {
  * POST /api/auth/login
  * Authenticate user and create session
  *
- * Expected body:
+ * Expected JSON PAYLOAD`:
  * {
  *   "username": "string",
  *   "password": "string"
@@ -201,10 +179,8 @@ router.post('/login', loginValidation, async (req, res) => {
     }
 });
 
-/**
- * POST /api/auth/logout
- * Destroy user session and log out
- */
+// POST /api/auth/logout
+// destroy user session and log out
 router.post('/logout', (req, res) => {
     try {
         // 1. Destroy the user session
@@ -230,11 +206,9 @@ router.post('/logout', (req, res) => {
     }
 });
 
-/**
- * GET /api/auth/me
- * Get current user information
- * Requires authentication
- */
+// GET /api/auth/me
+// gets current user information
+// requires authentication
 router.get('/me', requireAuth, async (req, res) => {
     try {
         // TODO: Implement current user retrieval
@@ -264,15 +238,12 @@ router.get('/me', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * GET /api/auth/status
- * Check if user is authenticated
- */
+// GET /api/auth/status
+// check if user is authenticated
 router.get('/status', (req, res) => {
-    // TODO: Implement authentication status check
-    // 1. Check if user session exists
+    // check if user session exists
     const isAuthenticated = !!req.session.userId;
-    // 2. Return authentication status
+    // return authentication status
     res.json({
         authenticated: isAuthenticated,
         ...(isAuthenticated && {
@@ -284,21 +255,13 @@ router.get('/status', (req, res) => {
     });
 });
 
-// =============================================================================
-// HELPER FUNCTIONS
-// =============================================================================
+// helper functions
 
-/**
- * Password strength checker
- * Helper function to validate password strength
- */
+// password strength checker
 function checkPasswordStrength(password) {
-    // TODO: Implement password strength checking
-    // This could include checks for:
-    // - Length requirements
-    // - Character variety (uppercase, lowercase, numbers, symbols)
-    // - Common password detection
-    // - Dictionary word detection
+    // this includes checks for:
+    // - length requirements
+    // - character variety (uppercase, lowercase, numbers, symbols)
 
     const requirements = {
         length: password.length >= 6,
@@ -316,3 +279,4 @@ function checkPasswordStrength(password) {
 }
 
 module.exports = router;
+ 

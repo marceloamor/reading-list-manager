@@ -2,35 +2,21 @@
  * Authentication Middleware
  *
  * This file contains middleware functions for handling user authentication.
- * It includes functions to protect routes, check user sessions, and handle
- * authentication-related functionality.
- *
- * Learning Notes:
- * - Middleware functions run between the request and response
- * - They can modify the request/response or terminate the chain
- * - Authentication middleware checks if users are logged in
- * - Use next() to continue to the next middleware or route handler
+ * We include functions to protect routes, check user sessions, and handle
+ * authentication related functionality.
  */
 
-/**
- * Middleware to require authentication
- * This function checks if a user is logged in before allowing access to a route
- *
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Express next function
- */
+
 function requireAuth(req, res, next) {
     try {
-        // TODO: Implement authentication check
-        // 1. Check if user session exists
+        // check if user session exists
             if (!req.session || !req.session.userId) {
                 return res.status(401).json({
                 error: 'Authentication required',
                 message: 'Please log in to access this resource'
             });
         }
-        // User is authenticated, proceed
+        // User is authenticated, go on!
         next();
     } catch (error) {
         console.error('Authentication middleware error:', error);
@@ -40,21 +26,12 @@ function requireAuth(req, res, next) {
     }
 }
 
-/**
- * Middleware to optionally check authentication
- * This function checks authentication but doesn't block access
- * Useful for routes that have different behavior for logged-in vs anonymous users
- *
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Express next function
- */
+
 function optionalAuth(req, res, next) {
     try {
-        // TODO: Implement optional authentication check
-        // 1. Check if user session exists
+        // check if user session exists
         if (req.session && req.session.userId) {
-            // 2. Set req.user if authenticated
+            // set req.user if authenticated
             req.user = {
                 id: req.session.userId,
                 username: req.session.username // assuming stored at login
@@ -63,25 +40,17 @@ function optionalAuth(req, res, next) {
         next();
     } catch (error) {
         console.error('Optional authentication middleware error:', error);
-        // Continue even if there's an error, just without user info
+        // continue even if there's an error, just without user info
         next();
     }
 }
 
-/**
- * Middleware to check if user is already authenticated
- * Useful for login/register routes where authenticated users should be redirected
- *
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Express next function
- */
+
 function requireGuest(req, res, next) {
     try {
-        // TODO: Implement guest-only check
-        // 1. Check if user is already logged in
+        // check if user is already logged in
         if (req.session && req.session.userId) {
-        // 2. Return error if authenticated (they shouldn't access login/register)
+        // return error if authenticated (they shouldn't access login/register)
         return res.status(403).json({
                 error: 'Already authenticated',
                 message: 'You are already logged in'
@@ -96,17 +65,11 @@ function requireGuest(req, res, next) {
     }
 }
 
-/**
- * Middleware to check user permissions/roles
- * For future expansion if role-based access control is needed
- *
- * @param {string|Array} requiredRoles - Required role(s) for access
- * @returns {Function} - Middleware function
- */
+// check user permissions/roles
 function requireRole(requiredRoles) {
     return (req, res, next) => {
         try {
-            // TODO: Implement role-based access control
+            // check if user session exists
             if (!req.session || !req.session.userId) {
                 return res.status(401).json({ error: 'Authentication required' });
             }
@@ -133,14 +96,7 @@ function requireRole(requiredRoles) {
     };
 }
 
-/**
- * Middleware to add user info to request
- * Fetches user details and adds them to req.user for use in route handlers
- *
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Express next function
- */
+// add user info to request
 async function attachUser(req, res, next) {
     try {
         // TODO: Implement user attachment
@@ -165,14 +121,7 @@ async function attachUser(req, res, next) {
     }
 }
 
-/**
- * Middleware to log authentication events
- * Useful for security monitoring and debugging
- *
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Express next function
- */
+// log authentication events
 function logAuthEvent(req, res, next) {
     try {
         // TODO: Implement authentication event logging
@@ -189,25 +138,6 @@ function logAuthEvent(req, res, next) {
 
         next();
 
-        // EXAMPLE ENHANCED IMPLEMENTATION:
-        /*
-        const authEvent = {
-            timestamp: new Date().toISOString(),
-            method: req.method,
-            path: req.path,
-            ip: req.ip || req.connection.remoteAddress,
-            userAgent: req.get('User-Agent'),
-            userId: req.session?.userId || null,
-            authenticated: !!(req.session && req.session.userId),
-            sessionId: req.sessionID
-        };
-
-        // Log to file, database, or external service
-        console.log('Auth Event:', JSON.stringify(authEvent));
-
-        next();
-        */
-
     } catch (error) {
         console.error('Auth logging error:', error);
         // Continue even if logging fails
@@ -215,13 +145,7 @@ function logAuthEvent(req, res, next) {
     }
 }
 
-/**
- * Rate limiting middleware for authentication endpoints
- * Prevents brute force attacks on login endpoints
- *
- * @param {Object} options - Rate limiting options
- * @returns {Function} - Middleware function
- */
+// rate limiting middleware for authentication endpoints
 function authRateLimit(options = {}) {
     const {
         windowMs = 15 * 60 * 1000, // 15 minutes
@@ -229,18 +153,15 @@ function authRateLimit(options = {}) {
         message = 'Too many authentication attempts, please try again later'
     } = options;
 
-    // TODO: Implement proper rate limiting
-    // For now, return a placeholder middleware
+    // return a placeholder middleware
     return (req, res, next) => {
-        // PLACEHOLDER: Basic implementation would store attempts in memory or database
+        // basic implementation would store attempts in memory or database
         console.log(`Auth rate limit check for IP: ${req.ip}`);
         next();
 
-        // EXAMPLE IMPLEMENTATION STRUCTURE:
-        /*
-        // This would typically use a more sophisticated rate limiting library
-        // or implement custom logic with Redis/database storage
-
+        // This could use a more sophisticated rate limiting library
+        // or implement custom logic with Redis/database storage in a prod env,
+        // but for now, we'll just log the request
         const rateLimit = require('express-rate-limit');
 
         return rateLimit({
@@ -250,7 +171,6 @@ function authRateLimit(options = {}) {
             standardHeaders: true,
             legacyHeaders: false,
         });
-        */
     };
 }
 

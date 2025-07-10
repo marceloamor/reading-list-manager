@@ -1,40 +1,27 @@
 /**
- * Main Application Entry Point
- * 
- * This file initialises the Svelte application and mounts it to the DOM.
- * It also sets up global error handling and development features.
- * 
- * Learning Notes:
- * - This is the entry point for the entire frontend application
- * - It creates the root Svelte component and mounts it to #app
- * - Error handling and development tools are configured here
+ * main application entry point
+ * this file initialises the Svelte application and mounts it to the DOM.
+ * it also sets up global error handling and development features.
  */
 
 import App from './App.svelte'
 
-// =============================================================================
-// APPLICATION INITIALISATION
-// =============================================================================
+// application initialisation
 
-/**
- * Initialise and mount the Svelte application
- */
 function initializeApp() {
     try {
         // Mount the main App component to the #app element
         const app = new App({
             target: document.getElementById('app'),
             
-            // Pass initial props if needed
+            // pass initial props if needed
             props: {
-                // TODO: Add any global props here
-                // For example: API base URL, app version, etc.
                 version: __APP_VERSION__ || '1.0.0',
                 apiUrl: __API_URL__ || '/api'
             }
         });
 
-        // Store app instance globally for debugging in development
+        // store app instance globally for debugging in development
         if (import.meta.env.DEV) {
             window.__SVELTE_APP__ = app;
             console.log('📱 Svelte app initialised in development mode');
@@ -54,10 +41,8 @@ function initializeApp() {
     }
 }
 
-/**
- * Show fallback error UI when the app fails to initialise
- * @param {Error} error - The error that occurred
- */
+// show fallback error UI when the app fails to initialise
+
 function showFallbackError(error) {
     const appContainer = document.getElementById('app');
     
@@ -117,13 +102,8 @@ function showFallbackError(error) {
     }
 }
 
-// =============================================================================
-// DEVELOPMENT FEATURES
-// =============================================================================
+// dev features
 
-/**
- * Set up development-only features
- */
 function setupDevelopmentFeatures() {
     if (!import.meta.env.DEV) return;
 
@@ -165,9 +145,8 @@ function setupDevelopmentFeatures() {
     console.log('🛠️  Development helpers available at window.__DEV_HELPERS__');
 }
 
-/**
- * Set up global error handling
- */
+// set up global error handling
+
 function setupErrorHandling() {
     // Handle JavaScript errors
     window.addEventListener('error', (event) => {
@@ -179,29 +158,19 @@ function setupErrorHandling() {
             error: event.error
         });
         
-        // TODO: Send error to logging service in production
-        if (import.meta.env.PROD) {
-            // sendErrorToLoggingService(event.error);
-        }
     });
 
     // Handle unhandled promise rejections
     window.addEventListener('unhandledrejection', (event) => {
-        console.error('💥 Unhandled promise rejection:', event.reason);
-        
-        // TODO: Send error to logging service in production
-        if (import.meta.env.PROD) {
-            // sendErrorToLoggingService(event.reason);
-        }
+        console.error('Unhandled promise rejection:', event.reason);
         
         // Prevent the default browser behaviour (logging to console)
         event.preventDefault();
     });
 }
 
-/**
- * Check browser compatibility
- */
+// check browser compatibility
+
 function checkBrowserCompatibility() {
     const requiredFeatures = [
         'fetch',
@@ -221,7 +190,7 @@ function checkBrowserCompatibility() {
     });
 
     if (missingFeatures.length > 0) {
-        console.warn('⚠️  Browser compatibility warning:', {
+        console.warn('Browser compatibility warning:', {
             missing: missingFeatures,
             userAgent: navigator.userAgent
         });
@@ -247,15 +216,10 @@ function checkBrowserCompatibility() {
     return true;
 }
 
-// =============================================================================
-// APPLICATION STARTUP
-// =============================================================================
+// application startup
 
-/**
- * Main application startup function
- */
 function startup() {
-    console.log('🚀 Starting Reading List Manager...');
+    console.log('Starting Reading List Manager...');
 
     // Set up error handling first
     setupErrorHandling();

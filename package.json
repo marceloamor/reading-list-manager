@@ -11,15 +11,9 @@
     "backend:start": "cd backend && npm start",
     "frontend:build": "cd frontend && npm run build",
     "build": "npm run frontend:build",
-    "test": "npm run test:backend && npm run test:frontend",
-    "test:backend": "cd backend && npm test",
-    "test:frontend": "cd frontend && npm test",
     "db:init": "node db/init.js",
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
-    "clean": "rm -rf node_modules backend/node_modules frontend/node_modules",
-    "lint": "npm run lint:backend && npm run lint:frontend",
-    "lint:backend": "cd backend && npm run lint",
-    "lint:frontend": "cd frontend && npm run lint"
+    "clean": "rm -rf node_modules backend/node_modules frontend/node_modules"
   },
   "keywords": [
     "reading-list",
@@ -45,8 +39,5 @@
   "bugs": {
     "url": "https://github.com/marceloamor/reading-list-manager/issues"
   },
-  "homepage": "https://github.com/marceloamor/reading-list-manager#readme",
-  "dependencies": {
-    "sqlite3": "^5.1.7"
-  }
+  "homepage": "https://github.com/marceloamor/reading-list-manager#readme"
 }

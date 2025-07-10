@@ -1,169 +1,117 @@
-<!--
-  Main Application Component
-
-  This is the root component of the Reading List Manager application.
-  It handles routing, authentication state, and the overall app layout.
-
-  Learning Notes:
-  - This component is mounted to the DOM by main.js
-  - It manages global state and navigation between different views
-  - Uses Svelte stores for reactive state management
-  - Implements client-side routing for single-page app functionality
--->
+<!-- Main application component handling routing and auth -->
 
 <script>
-    // Import necessary stores and components
     import { onMount } from 'svelte';
-
-    // Import authentication store
     import { authStore } from './stores/auth.js';
-
-    // Import page components
+    import { booksStore } from './stores/books.js';
     import Login from './routes/Login.svelte';
     import Register from './routes/Register.svelte';
     import MyBooks from './routes/MyBooks.svelte';
-    // import PublicBooks from './routes/PublicBooks.svelte';
+    import PublicBooks from './routes/PublicBooks.svelte';
 
-    // TODO: Import reusable components
-    // import Nav from './components/Nav.svelte';
-    // import LoadingSpinner from './components/LoadingSpinner.svelte';
-
-    // Props passed from main.js
     export let version = '1.0.0';
     export const apiUrl = '/api';
 
-    // =============================================================================
-    // STATE MANAGEMENT
-    // =============================================================================
-
-    // Current page/route
-    let currentPage = 'login'; // Default to login page
-
-    // Loading states
+    // application state
+    let currentPage = 'login';
     let isLoading = true;
     let isInitialising = true;
-
-    // Error states
     let appError = null;
 
-    // Subscribe to auth store
+    // Store subscriptions
     $: isAuthenticated = $authStore.isAuthenticated;
     $: currentUser = $authStore.user;
     $: authLoading = $authStore.isLoading;
     $: authError = $authStore.error;
+    $: userBooks = $booksStore.books;
+    $: booksLoading = $booksStore.isLoading;
+    $: booksError = $booksStore.error;
 
-    // =============================================================================
-    // ROUTING LOGIC
-    // =============================================================================
+    // watch for authentication changes to fetch/clear books
+    let hasLoadedBooksOnce = false;
+    $: if (isAuthenticated && currentUser && !hasLoadedBooksOnce) {
+        handleUserLogin();
+        hasLoadedBooksOnce = true;
+    } else if (!isAuthenticated) {
+        booksStore.clearBooks();
+        hasLoadedBooksOnce = false;
+    }
 
-    /**
-     * Simple client-side routing
-     * In a real implementation, you might use a routing library
-     *
-     * TODO: Implement proper routing
-     * - Parse URL hash or use History API
-     * - Handle navigation between pages
-     * - Protect authenticated routes
-     */
+    // handle user login and fetch their books
+    async function handleUserLogin() {
+        try {
+            console.log('Loading user books...');
+            await booksStore.fetchBooks();
+            console.log('Books loaded successfully');
+        } catch (error) {
+            console.error('Failed to load books:', error);
+        }
+    }
+
+    // client-side routing
     function handleNavigation(page) {
-        // TODO: Implement navigation logic
         console.log('Navigating to:', page);
-
-        // Basic routing - replace with proper router
         currentPage = page;
-
-        // Update URL (basic implementation)
         window.location.hash = page;
     }
 
-    /**
-     * Parse current route from URL
-     */
+    // parse current route from URL
     function parseRoute() {
-        // TODO: Implement URL parsing
         const hash = window.location.hash.slice(1) || 'login';
 
-        // If user is not authenticated, redirect to login
-        if (
-            !isAuthenticated &&
-            !['login', 'register', 'public'].includes(hash)
-        ) {
+        if (['login', 'register', 'public'].includes(hash)) {
+            return hash;
+        }
+
+        if (!isAuthenticated) {
             return 'login';
         }
 
-        return hash;
+        return hash === '' ? 'my-books' : hash;
     }
 
-    // =============================================================================
-    // LIFECYCLE AND INITIALISATION
-    // =============================================================================
-
-    /**
-     * Application initialisation
-     * Runs when the component is first mounted
-     */
+    // application initialisation
     onMount(async () => {
         try {
-            console.log('🎯 Initialising Reading List Manager...');
-
-            // Check authentication status with backend
+            console.log('Initializing Reading List Manager...');
             await authStore.checkAuthStatus();
-
-            // Parse current route
-            currentPage = parseRoute();
-
-            // Set up route change listener
             window.addEventListener('hashchange', () => {
                 currentPage = parseRoute();
             });
-
-            // TODO: Load any necessary app data
-            // await loadAppData();
-
             isInitialising = false;
             isLoading = false;
-
-            console.log('✅ App initialisation complete');
+            console.log('App initialization complete');
         } catch (error) {
-            console.error('❌ App initialisation failed:', error);
+            console.error('App initialization failed:', error);
             appError = error.message;
             isInitialising = false;
             isLoading = false;
         }
     });
 
-    // =============================================================================
-    // EVENT HANDLERS
-    // =============================================================================
+    $: if (!isInitialising) {
+        currentPage = parseRoute();
+    }
 
-    /**
-     * Handle successful login
-     */
+    // event handlers
     function handleLoginSuccess(user) {
         console.log('Login successful:', user);
         handleNavigation('my-books');
     }
 
-    /**
-     * Handle logout
-     */
     async function handleLogout() {
         console.log('Logging out...');
+        booksStore.clearBooks();
         await authStore.logout();
         handleNavigation('login');
     }
 
-    /**
-     * Handle registration success
-     */
     function handleRegisterSuccess(user) {
         console.log('Registration successful:', user);
         handleNavigation('my-books');
     }
 
-    // =============================================================================
     // REACTIVE STATEMENTS
-    // =============================================================================
 
     // Update page title based on current route
     $: {
@@ -186,23 +134,12 @@
     }
 </script>
 
-<!-- =============================================================================
-     TEMPLATE / MARKUP
-     ============================================================================= -->
+<!-- TEMPLATE / MARKUP -->
 
 <main class="app" class:loading={isLoading}>
     <!-- Application Header -->
     <header class="app-header">
-        <h1 class="app-title">📚 Reading List Manager</h1>
-
-        <!-- TODO: Add navigation component -->
-        <!-- {#if isAuthenticated}
-      <Nav
-        currentPage={currentPage}
-        onNavigate={handleNavigation}
-        onLogout={handleLogout}
-      />
-    {/if} -->
+        <h1 class="app-title">Reading List Manager</h1>
 
         <!-- Placeholder navigation -->
         {#if isAuthenticated}
@@ -243,7 +180,6 @@
             <!-- Loading State -->
         {:else if isInitialising}
             <div class="loading-container">
-                <!-- TODO: Use LoadingSpinner component -->
                 <div
                     class="loading-spinner"
                     aria-label="Loading application..."
@@ -259,8 +195,6 @@
                     <h2>Welcome Back</h2>
                     <p>Please log in to access your reading list.</p>
 
-                    <!-- TODO: Replace with Login component -->
-                    <!-- Placeholder login form -->
                     <Login onSuccess={handleLoginSuccess} />
                     <p>
                         Don't have an account?
@@ -278,7 +212,6 @@
                 <div class="page-container">
                     <h2>Create Account</h2>
                     <p>Join Reading List Manager to track your books.</p>
-                    <!-- TODO: Replace with Register component -->
                     <Register onSuccess={handleRegisterSuccess} />
                     <p>
                         Already have an account?
@@ -297,42 +230,13 @@
                     <h2>My Reading List</h2>
                     <p>Welcome back, {currentUser?.username || 'Reader'}!</p>
 
-                    <!-- TODO: Replace with MyBooks component -->
                     <MyBooks />
-
-                    <!-- Placeholder books view -->
-                    <div class="placeholder-content">
-                        <h3>My Books Component Placeholder</h3>
-                        <p>TODO: Implement MyBooks component with:</p>
-                        <ul>
-                            <li>Book list display</li>
-                            <li>Add new book form</li>
-                            <li>Edit/delete book functionality</li>
-                            <li>Filter and search features</li>
-                        </ul>
-                    </div>
                 </div>
 
                 <!-- Route: Public Books Page -->
             {:else if currentPage === 'public'}
                 <div class="page-container">
-                    <h2>Popular Books</h2>
-                    <p>Discover what other readers are enjoying.</p>
-
-                    <!-- TODO: Replace with PublicBooks component -->
-                    <!-- <PublicBooks /> -->
-
-                    <!-- Placeholder public view -->
-                    <div class="placeholder-content">
-                        <h3>Public Books Component Placeholder</h3>
-                        <p>TODO: Implement PublicBooks component with:</p>
-                        <ul>
-                            <li>Popular books statistics</li>
-                            <li>Most read books</li>
-                            <li>Popular genres</li>
-                            <li>Search functionality</li>
-                        </ul>
-                    </div>
+                    <PublicBooks />
                 </div>
 
                 <!-- Route: 404 Not Found -->
@@ -355,21 +259,17 @@
 
     <!-- Application Footer -->
     <footer class="app-footer">
-        <p>Reading List Manager v{version}</p>
+        <p>Northeastern's Very OwnReading List Manager v{version}</p>
         {#if import.meta.env.DEV}
             <p class="dev-info">Development Mode</p>
         {/if}
     </footer>
 </main>
 
-<!-- =============================================================================
-     STYLES
-     ============================================================================= -->
+<!-- STYLES -->
 
 <style>
-    /* =============================================================================
-     GLOBAL APP LAYOUT
-     ============================================================================= */
+    /* GLOBAL APP LAYOUT */
 
     .app {
         min-height: 100vh;
@@ -379,9 +279,7 @@
             Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     }
 
-    /* =============================================================================
-     HEADER STYLES
-     ============================================================================= */
+    /* HEADER STYLES */
 
     .app-header {
         background: #2563eb;
@@ -434,9 +332,7 @@
         background-color: #b91c1c;
     }
 
-    /* =============================================================================
-     MAIN CONTENT STYLES
-     ============================================================================= */
+    /* MAIN CONTENT STYLES */
 
     .app-content {
         flex: 1;
@@ -463,11 +359,8 @@
         font-size: 1.125rem;
     }
 
-    /* =============================================================================
-     PLACEHOLDER STYLES
-     ============================================================================= */
+    /* PLACEHOLDER STYLES */
 
-    .placeholder-form,
     .placeholder-content {
         background: white;
         border: 2px dashed #d1d5db;
@@ -477,13 +370,11 @@
         margin: 2rem 0;
     }
 
-    .placeholder-form h3,
     .placeholder-content h3 {
         color: #374151;
         margin-bottom: 1rem;
     }
 
-    .placeholder-form p,
     .placeholder-content p {
         color: #6b7280;
         margin-bottom: 1rem;
@@ -500,9 +391,7 @@
         margin-bottom: 0.5rem;
     }
 
-    /* =============================================================================
-     LOADING AND ERROR STYLES
-     ============================================================================= */
+    /* LOADING AND ERROR STYLES */
 
     .loading-container,
     .error-container {
@@ -551,9 +440,7 @@
         margin-top: 1rem;
     }
 
-    /* =============================================================================
-     BUTTON STYLES
-     ============================================================================= */
+    /* BUTTON STYLES */
 
     button {
         background: #2563eb;
@@ -583,9 +470,7 @@
         color: #1d4ed8;
     }
 
-    /* =============================================================================
-     FOOTER STYLES
-     ============================================================================= */
+    /* FOOTER STYLES */
 
     .app-footer {
         background: #f3f4f6;
@@ -602,9 +487,7 @@
         margin-top: 0.25rem;
     }
 
-    /* =============================================================================
-     RESPONSIVE DESIGN
-     ============================================================================= */
+    /* RESPONSIVE DESIGN */
 
     @media (max-width: 768px) {
         .app-header {
@@ -635,9 +518,7 @@
         }
     }
 
-    /* =============================================================================
-     ACCESSIBILITY IMPROVEMENTS
-     ============================================================================= */
+    /* ACCESSIBILITY IMPROVEMENTS */
 
     @media (prefers-reduced-motion: reduce) {
         .loading-spinner {
@@ -655,3 +536,4 @@
         }
     }
 </style>
+ 

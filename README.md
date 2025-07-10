@@ -64,7 +64,6 @@ reading-list-manager/
 │   └── package.json       # Frontend dependencies
 ├── db/                    # Database files and setup
 │   ├── schema.sql         # Database table definitions
-│   ├── seed.sql          # Sample data for development
 │   └── init.js           # Database initialisation script
 ├── docs/                 # Documentation
 │   ├── api.md           # API endpoint documentation

@@ -1,19 +1,6 @@
-/**
- * Main Express Server Configuration
- *
- * This file sets up the Express.js server for the Reading List Manager application.
- * It includes middleware configuration, route setup, and server initialisation.
- *
- * Learning Notes:
- * - Express.js is a web framework for Node.js
- * - Middleware functions run between the request and response
- * - Routes define how the application responds to client requests
- */
-
-// Load environment variables from .env file
+// Reading List Manager Backend Server
 require('dotenv').config();
 
-// Import required modules
 const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
@@ -21,81 +8,44 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const path = require('path');
-
-// Import route handlers
 const authRoutes = require('./routes/auth');
 const bookRoutes = require('./routes/books');
-
-// Import database utilities
 const { initializeDatabase } = require('./utils/db');
 
-// Create Express application instance
 const app = express();
-
-// Set the port from environment variable or default to 3001
 const PORT = process.env.PORT || 3001;
 
-// =============================================================================
-// MIDDLEWARE CONFIGURATION
-// =============================================================================
-
-/**
- * Security Middleware
- * helmet() sets various HTTP headers to help protect the app from vulnerabilities
- */
+// security middleware
 app.use(helmet());
 
-/**
- * CORS (Cross-Origin Resource Sharing) Configuration
- * This allows the frontend (running on a different port) to make requests to the backend
- *
- * TODO: Configure CORS properly for your frontend URL
- * Currently allows all origins - restrict this in production!
- */
+// CORS config
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Vite default port
-    credentials: true, // Allow cookies to be sent with requests
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-/**
- * Rate Limiting
- * Prevents too many requests from the same IP address
- * Helps protect against brute force attacks
- */
+// Rate limiting
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
+    windowMs: 15 * 60 * 1000,
+    max: 100,
     message: {
         error: 'Too many requests from this IP, please try again later.'
     }
 });
 app.use(limiter);
 
-/**
- * Request Logging
- * morgan logs HTTP requests to the console for debugging
- */
+// Request logging
 app.use(morgan('combined'));
 
-/**
- * Body Parsing Middleware
- * express.json() parses incoming JSON requests
- * express.urlencoded() parses form data
- */
+// Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-/**
- * Session Configuration
- * Sessions allow us to store user data between requests
- *
- * TODO: Implement session configuration
- * - Set up a secure session secret
- * - Configure session store (for production, consider using a database)
- * - Set appropriate cookie options
- */
+// session configuration
+// sessions allow us to store user data between requests
+
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your-super-secret-key-change-this-in-production',
     resave: true, // changed from false
@@ -108,29 +58,19 @@ app.use(session({
     }
 }));
 
-/**
- * Serve static files from frontend build
- * In production, this serves the built Svelte application
- */
+// serve static files from frontend build
+// in production, this serves the built Svelte application
 if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '../frontend/dist')));
 }
 
-// =============================================================================
-// ROUTE CONFIGURATION
-// =============================================================================
-
-/**
- * API Routes
- * All API routes are prefixed with /api
- */
+// route configuration
+// all API routes are prefixed with /api
 app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
 
-/**
- * Health Check Endpoint
- * Simple endpoint to check if the server is running
- */
+// health check endpoint
+// simple endpoint to check if the server is running
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
@@ -140,9 +80,7 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-/**
- * Root endpoint with API information
- */
+// root endpoint with API information
 app.get('/api', (req, res) => {
     res.json({
         message: 'Welcome to the Reading List Manager API',
@@ -157,24 +95,16 @@ app.get('/api', (req, res) => {
     });
 });
 
-/**
- * Catch-all handler for frontend routes (SPA support)
- * In production, serves the frontend app for any non-API routes
- */
+// catch-all handler for frontend routes (SPA support)
+// in production, serves the frontend app for any non-API routes
 if (process.env.NODE_ENV === 'production') {
     app.get('*', (req, res) => {
         res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
     });
 }
 
-// =============================================================================
-// ERROR HANDLING MIDDLEWARE
-// =============================================================================
-
-/**
- * 404 Handler
- * Handles requests to non-existent routes
- */
+// error handling middleware
+// handles requests to non-existent routes
 app.use((req, res) => {
     res.status(404).json({
         error: 'Route not found',
@@ -183,15 +113,8 @@ app.use((req, res) => {
     });
 });
 
-/**
- * Global Error Handler
- * Catches and handles any errors that occur in the application
- *
- * TODO: Implement comprehensive error handling
- * - Log errors appropriately
- * - Send appropriate error responses
- * - Handle different error types (validation, database, etc.)
- */
+// global error handler
+// catches and handles any errors that occur in the application
 app.use((error, req, res, next) => {
     console.error('Error occurred:', error);
 
@@ -205,27 +128,19 @@ app.use((error, req, res, next) => {
     });
 });
 
-// =============================================================================
-// SERVER INITIALISATION
-// =============================================================================
-
-/**
- * Start the server
- * First initialise the database, then start listening for requests
- */
+// server initialisation
+// first initialise the database, then start listening for requests
 async function startServer() {
     try {
-        // TODO: Implement database initialisation
-        console.log('Initialising database...');
+        console.log('Initializing database...');
         await initializeDatabase();
-        console.log('Database initialised successfully');
+        console.log('Database initialized successfully');
 
-        // Start the server
         app.listen(PORT, () => {
-            console.log(`🚀 Server running on http://localhost:${PORT}`);
-            console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-            console.log(`🔧 API available at http://localhost:${PORT}/api`);
-            console.log('📚 Reading List Manager Backend is ready!');
+            console.log(`Server running on http://localhost:${PORT}`);
+            console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+            console.log(`API available at http://localhost:${PORT}/api`);
+            console.log('Reading List Manager Backend is ready!');
         });
     } catch (error) {
         console.error('Failed to start server:', error);
@@ -233,8 +148,9 @@ async function startServer() {
     }
 }
 
-// Start the server
+// start the server
 startServer();
 
-// Export the app for testing purposes
+// export the app for testing purposes
 module.exports = app;
+ 

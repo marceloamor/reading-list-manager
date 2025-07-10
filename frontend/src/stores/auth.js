@@ -1,25 +1,17 @@
 /**
  * Authentication Store
  * 
- * Simple Svelte store for managing user authentication state.
+ * Svelte store for managing user authentication state.
  * This handles login, logout, and session persistence.
- * 
- * Learning Notes:
- * - Svelte stores are reactive - components update automatically when store values change
- * - writable() creates a store that can be updated
- * - Custom stores allow us to add methods like login(), logout()
  */
 
 import { writable } from 'svelte/store';
 
-// =============================================================================
-// STORE STATE
-// =============================================================================
+// store state
 
-/**
- * Authentication state
- * Contains user info and authentication status
- */
+// authentication state
+// contains user info and authentication status
+
 const initialState = {
     isAuthenticated: false,
     user: null,
@@ -27,17 +19,14 @@ const initialState = {
     error: null
 };
 
-// Create the main auth store
+// create the main auth store
 const { subscribe, set, update } = writable(initialState);
 
-// =============================================================================
-// API FUNCTIONS
-// =============================================================================
+// API functions
 
-/**
- * Check current authentication status with backend
- * Called when app loads to restore session
- */
+// check current authentication status with backend
+// called when app loads to restore session
+
 async function checkAuthStatus() {
     update(state => ({ ...state, isLoading: true, error: null }));
     
@@ -65,7 +54,7 @@ async function checkAuthStatus() {
                 });
             }
         } else {
-            // Not authenticated
+            // not authenticated
             set({
                 isAuthenticated: false,
                 user: null,
@@ -84,10 +73,9 @@ async function checkAuthStatus() {
     }
 }
 
-/**
- * Login user
- * Updates store state on successful login
- */
+// login user
+// updates store state on successful login
+
 async function login(credentials) {
     update(state => ({ ...state, isLoading: true, error: null }));
     
@@ -134,10 +122,9 @@ async function login(credentials) {
     }
 }
 
-/**
- * Register new user
- * Automatically logs in after successful registration
- */
+// register new user
+// automatically logs in after successful registration
+
 async function register(userData) {
     update(state => ({ ...state, isLoading: true, error: null }));
     
@@ -184,10 +171,9 @@ async function register(userData) {
     }
 }
 
-/**
- * Logout user
- * Calls backend logout endpoint and clears store state
- */
+// logout user
+// calls backend logout endpoint and clears store state
+
 async function logout() {
     update(state => ({ ...state, isLoading: true }));
     
@@ -222,21 +208,17 @@ async function logout() {
     }
 }
 
-/**
- * Clear any error messages
- */
+// clear any error messages
+
 function clearError() {
     update(state => ({ ...state, error: null }));
 }
 
-// =============================================================================
-// EXPORT AUTH STORE
-// =============================================================================
+// export auth store
 
-/**
- * Custom auth store with methods
- * Components can subscribe to this store and call its methods
- */
+// custom auth store with methods
+// components can subscribe to this store and call its methods
+
 export const authStore = {
     subscribe,
     checkAuthStatus,

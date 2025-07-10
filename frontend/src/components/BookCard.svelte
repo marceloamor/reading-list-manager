@@ -1,3 +1,8 @@
+<!-- BookCard.svelte -->
+<!-- This component displays a book card with title, author, genre, and status. -->
+<!--  also includes actions for editing and deleting the book. -->
+
+
 <script>
     import { createEventDispatcher } from 'svelte';
     export let book;

@@ -21,7 +21,7 @@
         errors = {};
         if (showValidation) {
             validateForm();
-        }
+    }
     }
 
     function validateForm() {
@@ -60,8 +60,8 @@
         authStore.clearError();
 
         const result = await authStore.register({
-            username,
-            password,
+                    username,
+                    password,
             confirmPassword
         });
 

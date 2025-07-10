@@ -2,23 +2,15 @@
 --
 -- This file defines the database structure for the Reading List Manager application.
 -- It includes tables for users and books with appropriate constraints and relationships.
---
--- Learning Notes:
--- - PRIMARY KEY automatically creates an index and ensures uniqueness
--- - FOREIGN KEY constraints maintain referential integrity
--- - CHECK constraints enforce data validation at the database level
--- - Indexes improve query performance for frequently searched columns
 
--- =============================================================================
--- Users Table
--- =============================================================================
+-- users table
 
 -- Table to store user account information
 CREATE TABLE IF NOT EXISTS users (
     -- Primary key with auto-incrementing ID
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-    -- Username must be unique and not null
+    -- Username must be unique and not nullable
     username TEXT UNIQUE NOT NULL,
 
     -- Hashed password (never store plain text passwords!)
@@ -32,9 +24,7 @@ CREATE TABLE IF NOT EXISTS users (
     CONSTRAINT users_username_format CHECK (username GLOB '[A-Za-z0-9_-]*')
 );
 
--- =============================================================================
--- Books Table
--- =============================================================================
+-- books table
 
 -- Table to store book information for each user
 CREATE TABLE IF NOT EXISTS books (
@@ -75,9 +65,7 @@ CREATE TABLE IF NOT EXISTS books (
     CONSTRAINT books_notes_length CHECK (notes IS NULL OR LENGTH(notes) <= 1000)
 );
 
--- =============================================================================
--- Indexes for Performance
--- =============================================================================
+-- indexes for performance
 
 -- Index on user_id for faster book queries by user
 -- This is crucial for performance when fetching a user's books
@@ -98,25 +86,9 @@ CREATE INDEX IF NOT EXISTS idx_books_user_status ON books(user_id, status);
 -- Index on created_at for ordering books by when they were added
 CREATE INDEX IF NOT EXISTS idx_books_created_at ON books(created_at);
 
--- =============================================================================
--- Triggers for Automatic Updates
--- =============================================================================
+-- views for common queries (optional)
 
--- Trigger to automatically update the updated_at column when a book is modified
--- TODO: This trigger failed to run on Node v22 + sqlite3.
---       Revisit after finishing main dev work.
--- CREATE TRIGGER IF NOT EXISTS update_books_updated_at
---     AFTER UPDATE ON books
---     FOR EACH ROW
--- BEGIN
---     UPDATE books SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
--- END;
-
--- =============================================================================
--- Views for Common Queries (Optional)
--- =============================================================================
-
--- View to get book statistics by user (useful for dashboards)
+-- view to get book statistics by user (useful for dashboards)
 CREATE VIEW IF NOT EXISTS user_book_stats AS
 SELECT
     u.id as user_id,
@@ -140,43 +112,5 @@ SELECT
 FROM books
 WHERE title IS NOT NULL
 GROUP BY title, author, genre
-HAVING times_added > 1  -- Only show books added by multiple users
+HAVING times_added > 1  -- only show books added by multiple users
 ORDER BY times_added DESC;
-
--- =============================================================================
--- Comments and Documentation
--- =============================================================================
-
--- The schema is designed with the following considerations:
---
--- 1. Data Integrity:
---    - Foreign key constraints ensure books belong to valid users
---    - Check constraints validate data at the database level
---    - NOT NULL constraints ensure required fields are provided
---
--- 2. Performance:
---    - Indexes on frequently queried columns (user_id, status, genre)
---    - Composite indexes for common query patterns
---    - Primary keys for fast lookups
---
--- 3. Flexibility:
---    - Optional fields (author, genre, notes) allow varied book entries
---    - Text fields accommodate books from any language or region
---    - Extensible design allows for future enhancements
---
--- 4. Security:
---    - Password hashes only (never plain text)
---    - User isolation through foreign key relationships
---    - Data validation through constraints
---
--- 5. Audit Trail:
---    - created_at and updated_at timestamps for tracking changes
---    - Triggers for automatic timestamp updates
---
--- Future Enhancements Could Include:
--- - User roles table for role-based access control
--- - Book categories/tags table for more flexible categorisation
--- - Reading sessions table for tracking reading progress
--- - Book ratings and reviews
--- - Social features (following users, shared lists)
--- - External book data integration (ISBN, cover images, etc.)
